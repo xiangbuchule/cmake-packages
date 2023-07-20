@@ -174,7 +174,7 @@ void init() {
     io.Fonts->AddFontFromMemoryTTF((void *)hack_font_ptr, (int)hack_font_len, 15., &font_cfg, ranges);
     // font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_Bold;          // 加粗字体
     font_cfg.MergeMode = true; // 配置字体合并
-    io.Fonts->AddFontFromMemoryTTF((void *)simplified_chinese_font_ptr, (int)simplified_chinese_font_len, 15., &font_cfg, io.Fonts->GetGlyphRangesChineseFull());
+    io.Fonts->AddFontFromMemoryTTF((void *)simplified_chinese_font_ptr, (int)simplified_chinese_font_len, 15., &font_cfg, ranges);
     io.Fonts->Build();
 }
 

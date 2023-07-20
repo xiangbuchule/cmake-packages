@@ -75,7 +75,9 @@ set(deps_libs_file  "zlib-1.3.1" "freetype2-2.13.2" "glad2-2.0.4" "glfw3-3.3.9"
                     "openssl1-1.1.1w::ssl" "openssl1-1.1.1w::crypto"
                     "mysql-connector-cpp-8.3.0::jdbc" "mysql-connector-cpp-8.3.0::xdev"
                     "mysql8-8.3.0" "libarchive-3.7.2::shared" "jsoncpp-1.9.5" "xz-5.6.0"
-                    "lz4-1.9.4" "zstd-1.5.5" "libxml2-2.12")
+                    "lz4-1.9.4" "zstd-1.5.5" "libxml2-2.12"
+                    "libevent2-2.1.12" "libevent2-2.1.12::core" "libevent2-2.1.12::extra"
+                    "libevent2-2.1.12::openssl")
 
 # 查找源文件
 file(GLOB_RECURSE files CONFIGURE_DEPENDS "${project_source_path}/*.cpp")

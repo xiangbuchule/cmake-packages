@@ -152,7 +152,7 @@ function(add_boost)
     # params
     cmake_parse_arguments(boost "" "name;prefix;version;proxy" "deps" ${ARGN})
     # if target exist, return
-    if(TARGET "${boost_name}" OR (DEFINED "${boost_name}-includes"))
+    if(DEFINED "${boost_name}-includes")
         return()
     endif()
     # set pkg name

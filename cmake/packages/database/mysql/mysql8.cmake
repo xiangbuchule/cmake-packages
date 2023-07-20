@@ -5,14 +5,15 @@ include(ExternalProject)
 # source:   source code path
 function(mysql8_patch_script)
     # params
-    cmake_parse_arguments(mysql8 "" "script;source;proxy;zstd;lz4" "" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "script;source;proxy;zstd;lz4;libevent" "" ${ARGN})
     # set params
     set(script_content "\
 # set info
-set(source  \"${mysql8_source}\")
-set(proxy   \"${mysql8_proxy}\")
-set(zstd    \"${mysql8_zstd}\")
-set(lz4     \"${mysql8_lz4}\")
+set(source      \"${mysql8_source}\")
+set(proxy       \"${mysql8_proxy}\")
+set(zstd        \"${mysql8_zstd}\")
+set(lz4         \"${mysql8_lz4}\")
+set(libevent    \"${mysql8_libevent}\")
 ")
     string(APPEND script_content [[
 # write CMakeLists.txt content
@@ -33,13 +34,21 @@ if(NOT ("" STREQUAL "${lz4}"))
     string(REPLACE "NAMES lz4)" "NAMES lz4 PATH_SUFFIXES lib)" lz4_content "${lz4_content}")
     file(WRITE "${source}/cmake/lz4.cmake" "${lz4_content}")
 endif()
+if(NOT ("" STREQUAL "${libevent}"))
+    string(APPEND replace_content "set(ENV{PATH} \"${libevent};\$ENV{PATH}\")\n")
+    file(READ "${source}/cmake/libevent.cmake" event_content)
+    set(replace_tmp "  FIND_LIBRARY(LIBEVENT_PTHREADS event_pthreads PATHS \${LIBEVENT_LIB_PATHS})")
+    string(REPLACE "${replace_tmp}" "  IF(NOT WIN32)\n  ${replace_tmp}\n  ENDIF()" event_content "${event_content}")
+    string(REPLACE "PATHS \${LIBEVENT_LIB_PATHS}" "PATHS \${LIBEVENT_LIB_PATHS} PATH_SUFFIXES lib" event_content "${event_content}")
+    file(WRITE "${source}/cmake/libevent.cmake" "${event_content}")
+endif()
 string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
 file(WRITE "${source}/CMakeLists.txt" "${content}")
 
 file(READ "${source}/cmake/install_macros.cmake" content)
 set(regex_string "NOT type MATCHES \"STATIC_LIBRARY\"")
 set(replace_content "${regex_string} AND CMAKE_BUILD_TYPE_UPPER STREQUAL \"DEBUG\"")
-string(REPLACE "${regex_string}" "${replace_content}" new_content "${content}")
+string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
 file(WRITE "${source}/cmake/install_macros.cmake" "${content}")
 ]])
     file(WRITE "${mysql8_script}" "${script_content}")
@@ -195,7 +204,7 @@ endfunction()
 #   ENABLE_LIB_ONLY:    ON
 function(add_mysql8)
     # params
-    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy;zstd;lz4" "deps" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy;zstd;lz4;libevent" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${mysql8_name}" OR (DEFINED "${mysql8_name}-includes"))
         return()
@@ -279,7 +288,7 @@ function(add_mysql8)
     # patch
     set(mysql8_patch_file "${mysql8_patch}/patch.cmake")
     mysql8_patch_script(script "${mysql8_patch_file}" source "${mysql8_source}" proxy "${mysql8_proxy}" zstd "${mysql8_zstd}"
-                        lz4 "${mysql8_lz4}")
+                        lz4 "${mysql8_lz4}" libevent "${mysql8_libevent}")
     set(mysql8_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql8_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${mysql8_download}" SOURCE_DIR "${mysql8_source}"

@@ -325,7 +325,7 @@ function(add_libarchive)
     # params
     cmake_parse_arguments(libarchive "" "name;prefix;version;proxy;openssl;zlib;bzip2;lzma;lz4;zstd;libxml2" "deps" ${ARGN})
     # if target exist, return
-    if(TARGET "${libarchive_name}" OR (DEFINED "${libarchive_name}-includes"))
+    if(DEFINED "${libarchive_name}-includes")
         return()
     endif()
     # set pkg name

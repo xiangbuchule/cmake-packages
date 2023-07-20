@@ -28,6 +28,7 @@ function(add_stdexec)
     # set library
     add_library("${stdexec_name}" INTERFACE)
     target_include_directories("${stdexec_name}" INTERFACE "${stdexec_source}/include")
+    find_package(Threads REQUIRED)
     target_link_libraries("${stdexec_name}" INTERFACE Threads::Threads)
     target_compile_features("${stdexec_name}" INTERFACE cxx_std_20)
     add_dependencies("${stdexec_name}" "${pkg_name}")

@@ -9,6 +9,10 @@
 bool IS_FIRST_RENDER = true;
 
 
+// ================= 窗口样式 =================
+ThemeStyle THEME_STYLE = ThemeStyle::LIGHT;
+
+
 // ================= 窗口名字 =================
 // 功能窗口
 const char *OPTION_WINDOW_NAME = "\U000f0bab 功能选择";

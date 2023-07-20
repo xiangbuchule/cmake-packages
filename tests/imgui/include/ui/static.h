@@ -12,6 +12,15 @@
 // 是否第一次渲染
 extern bool IS_FIRST_RENDER;
 
+// ================= 窗口样式 =================
+// 全局样式
+enum ThemeStyle {
+    CUSTOM,
+    CLASSIC,
+    LIGHT,
+    DARK
+};
+extern ThemeStyle THEME_STYLE;
 
 // ================= 窗口名字 =================
 // 功能窗口

@@ -1,218 +1,287 @@
 include(ExternalProject)
 
-# 检查参数的宏
-# name: 变量名
-# default_value: 默认的值
-# value_list: 值可能的列表
-#   如果同时指定了默认值和值可能的列表
-#   那么如果值不在列表中,就使用默认值.
-#   如果仅指定了值可能的列表,那么如果
-#   值不在列表中,就使用列表中第一个值.
-macro(libevent2_check_params)
-    cmake_parse_arguments(check "" "name;default_value" "value_list" ${ARGN})
-    if("${check_value_list}" STREQUAL "")
-        if("${${check_name}}" STREQUAL "")
-            set("${check_name}" "${check_default_value}")
+# check and get cmake args params
+# parameter:    check cmake parameter
+# default:      default value
+# result:       return value
+function(get_cmake_args)
+    # get other paramers
+    cmake_parse_arguments(prefix "" "arg;default;result;args_list_name" "args_list" ${ARGN})
+    # to toupper
+    string(TOUPPER "${prefix_arg}" upper_arg)
+    # get paramer length
+    foreach(item IN LISTS prefix_args_list "${prefix_args_list_name}" prefix_UNPARSED_ARGUMENTS)
+        list(APPEND cmake_args_list "${item}")
+    endforeach()
+    list(LENGTH cmake_args_list cmake_args_length)
+    # get last index
+    math(EXPR cmake_args_last_index "${cmake_args_length} - 1")
+    # loop
+    while(cmake_args_last_index GREATER -1)
+        # get item
+        list(GET cmake_args_list ${cmake_args_last_index} item)
+        # to toupper
+        string(TOUPPER "${item}" upper_item)
+        # regex match
+        string(REGEX MATCH "-D( *)?${upper_arg}( *)?=(.*)?" match_result "${upper_item}")
+        if(match_result)
+            # find = index
+            string(FIND "${item}" "=" equal_index)
+            # get length
+            string(LENGTH "${item}" item_length)
+            # start index
+            math(EXPR equal_index "${equal_index} + 1")
+            # substring length
+            math(EXPR substring_length "${item_length} - ${equal_index}")
+            # substring
+            string(SUBSTRING "${item}" ${equal_index} ${substring_length} "${prefix_result}")
+            string(STRIP "${${prefix_result}}" "${prefix_result}")
+            # string(REPLACE "'"  "" "${prefix_result}" "${${prefix_result}}")
+            # string(REPLACE "\"" "" "${prefix_result}" "${${prefix_result}}")
+            set("${prefix_result}_FOUND" "YES" PARENT_SCOPE)
+            set("${prefix_result}" "${${prefix_result}}" PARENT_SCOPE)
+            return()
         endif()
-    else()
-        if(NOT ("${${check_name}}" STREQUAL "${check_default_value}"))
-            list(FIND check_value_list "${${check_name}}" check_value_list_index)
-            if(${check_value_list_index} LESS 0)
-                if(NOT ("${check_default_value}" STREQUAL ""))
-                    set("${check_name}" "${check_default_value}")
-                else()
-                    list(GET check_value_list 0 "${check_name}")
+        # index--
+        math(EXPR cmake_args_last_index "${cmake_args_last_index} - 1")
+    endwhile()
+    set("${prefix_result}" "${prefix_default}" PARENT_SCOPE)
+endfunction()
+
+# replace repeat cmake args
+# replace_list: need replace list name
+# source_list:  need change list name
+function(replace_cmake_args replace_list source_list)
+    foreach(item IN LISTS "${replace_list}")
+        string(STRIP "${item}" item)
+        # to toupper
+        string(TOUPPER "${item}" item)
+        # regex match
+        string(REGEX MATCH "-D(.*)?=(.*)?" match_result "${item}")
+        if(match_result)
+            # find = index
+            string(FIND "${item}" "=" equal_index)
+            # substring length
+            math(EXPR substring_length "${equal_index} - 2")
+            # substring
+            string(SUBSTRING "${item}" 2 ${substring_length} cmake_args_tmp)
+            string(STRIP "${cmake_args_tmp}" cmake_args_tmp)
+            # is repeat
+            foreach(source_item IN LISTS "${source_list}")
+                string(TOUPPER "${source_item}" upper_source_item)
+                # regex match
+                string(REGEX MATCH "-D( *)?${cmake_args_tmp}( *)?=(.*)?" match_result "${upper_source_item}")
+                if(match_result)
+                    list(APPEND replace_list_tmp "${source_item}")
                 endif()
-            endif()
+            endforeach()
         endif()
-    endif()
-endmacro()
-
-
-# 参数
-# shared 表示构建共享库而非静态库
-# git_shallow 表示使用git clone时添加--depth 1
-#   如果设置该参数version就不能设置为git的hash提交
-#   需要设置为分支或者tag名
-# name: glm 目标名
-# prefix: /path/dir 目录前缀
-# version: 2.1.12 指定版本
-# library_type: STATIC|SHARED|BOTH
-function(add_libevent2)
-    # 获取参数
-    set(libevent_options        "disable_debug_mode" "enable_verbose_debug" "disable_mm_replacement" "disable_thread_support"
-                                "disable_benchmark" "disable_tests" "disable_regress" "disable_samples" "disable_clock_gettime"
-                                "force_kqueue_check" "disable_openssl" "coverage" "doxygen"
-
-                                "disable_gcc_warnings" "enable_gcc_hardening" "enable_gcc_function_sections" "enable_gcc_warnings"
-
-                                "git_shallow")
-    set(libevent_params         "name" "prefix" "version" "library_type" "build_type")
-    set(libevent_multi_params   "depends" "cmake_args")
-    cmake_parse_arguments(libevent "${libevent_options}" "${libevent_params}" "${libevent_multi_params}" ${ARGN})
-    message(STATUS "Build ${libevent_name}...")
-    foreach(item ${libevent_options})
-        message(STATUS "Option '${item}': ${libevent_${item}}")
     endforeach()
-    foreach(item ${libevent_params})
-        message(STATUS "Params '${item}': ${libevent_${item}}")
+    # remove
+    foreach(item IN LISTS replace_list_tmp)
+        list(REMOVE_ITEM "${source_list}" "${item}")
     endforeach()
-    foreach(item ${libevent_multi_params})
-        message(STATUS "Multi Params '${item}': ${libevent_${item}}")
+    # replace
+    foreach(item IN LISTS "${replace_list}")
+        list(APPEND "${source_list}" "${item}")
     endforeach()
-    foreach(item ${libevent_UNPARSED_ARGUMENTS})
-        message(WARNING "No Used Params '${item}'")
-    endforeach()
-    # 如果已经存在就直接退出
-    if((TARGET "${libevent_name}_core") OR (TARGET "${libevent_name}_core"))
-        return()
-    endif()
-    # 检查参数
-    string(STRIP "${libevent_library_type}" libevent_library_type)
-    libevent2_check_params(name "libevent_library_type" default_value "SHARED" value_list "SHARED" "STATIC")
-    string(STRIP "${libevent_build_type}" libevent_build_type)
-    libevent2_check_params(name "libevent_build_type" default_value "${CMAKE_BUILD_TYPE}" value_list "Debug" "Release")
-    # 仓库地址
-    set(repository_url "https://github.com/libevent/libevent")
-    # 记录版本及其校验值
-    list(APPEND libevent_url_list       "https://github.com/libevent/libevent/archive/refs/tags/release-2.1.12-stable.zip")
-    list(APPEND libevent_file_list      "libevent-release-2.1.12-stable.zip")
-    list(APPEND libevent_hash_list      "8836AD722AB211DE41CB82FE098911986604F6286F67D10DFB2B6787BF418F49")
-    list(APPEND libevent_version_list   "2.1.12")
-    # 查找是否存在列出的版本
-    string(STRIP "${libevent_version}" libevent_version)
-    if("${libevent_version}" STREQUAL "")
-        set(libevent_version_index 0)
-    else()
-        list(FIND libevent_version_list "${libevent_version}" libevent_version_index)
-    endif()
-    if(libevent_version_index GREATER_EQUAL 0)
-        list(GET libevent_url_list  ${libevent_version_index} libevent_url)
-        list(GET libevent_file_list ${libevent_version_index} libevent_file)
-        list(GET libevent_hash_list ${libevent_version_index} libevent_hash)
-    endif()
-    # 设置文件路径
-    # set(libevent_tmp      "${CMAKE_CURRENT_BINARY_DIR}/ThirdCache/tmp/libevent")
-    set(libevent_download   "${libevent_prefix}/cache/download")
-    set(libevent_install    "${libevent_prefix}/cache/install/${libevent_name}")
-    set(libevent_source     "${libevent_prefix}/${libevent_name}")
-    if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-        set(libevent_binary "${libevent_prefix}/cache/bin/${libevent_name}")
-    else()
-        set(libevent_binary "${libevent_prefix}/cache/bin/${libevent_name}/${CMAKE_BUILD_TYPE}")
-    endif()
-    # set(libevent_stamp      "${CMAKE_CURRENT_BINARY_DIR}/ThirdCache/log/libevent")
-    # set(libevent_log        "${CMAKE_CURRENT_BINARY_DIR}/ThirdCache/log/libevent")
-    # 构建参数
-    if(${libevent_version_index} GREATER_EQUAL 0)
-        set(libevent_url_options URL "${libevent_url}" URL_HASH SHA256=${libevent_hash} DOWNLOAD_NAME "${libevent_file}")
-    else()
-        set(libevent_url_options    GIT_REPOSITORY "${repository_url}" GIT_TAG "${libevent_version}"
-                                    GIT_SHALLOW ${libevent_gitshallow} GIT_PROGRESS ON)
-    endif()
-    set(libevent_build_options  "-DEVENT__LIBRARY_TYPE='${libevent_library_type}'"
-                                "-DEVENT__DISABLE_DEBUG_MODE=${libevent_disable_debug_mode}"
-                                "-DEVENT__ENABLE_VERBOSE_DEBUG=${libevent_enable_verbose_debug}"
-                                "-DEVENT__DISABLE_MM_REPLACEMENT=${libevent_disable_mm_replacement}"
-                                "-DEVENT__DISABLE_THREAD_SUPPORT=${libevent_disable_thread_support}"
-                                "-DEVENT__DISABLE_BENCHMARK=${libevent_disable_benchmark}"
-                                "-DEVENT__DISABLE_TESTS=${libevent_disable_tests}"
-                                "-DEVENT__DISABLE_REGRESS=${libevent_disable_regress}"
-                                "-DEVENT__DISABLE_SAMPLES=${libevent_disable_samples}"
-                                "-DEVENT__DISABLE_CLOCK_GETTIME=${disable_clock_gettime}"
-                                "-DEVENT__FORCE_KQUEUE_CHECK=${libevent_force_kqueue_check}"
-                                "-DEVENT__DISABLE_OPENSSL=${libevent_disable_openssl}"
-                                "-DEVENT__COVERAGE=${libevent_coverage}" "-DEVENT__DOXYGEN=${libevent_doxygen}"
+    set("${source_list}" "${${source_list}}" PARENT_SCOPE)
+endfunction()
 
-                                "-DEVENT__DISABLE_GCC_WARNINGS=${libevent_disable_gcc_warnings}"
-                                "-DEVENT__ENABLE_GCC_HARDENING=${libevent_enable_gcc_hardening}"
-                                "-DEVENT__ENABLE_GCC_FUNCTION_SECTIONS=${libevent_enable_gcc_function_sections}"
-                                "-DEVENT__ENABLE_GCC_WARNINGS=${libevent_enable_gcc_warnings}"
-
-                                "-DCMAKE_BUILD_TYPE='${libevent_build_type}'" "-DCMAKE_DEBUG_POSTFIX=''"
-                                # "-DEXECUTABLE_OUTPUT_PATH='${libevent_binary}'"
-                                # "-DLIBRARY_OUTPUT_PATH='${libevent_binary}'"
-                                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY='${libevent_binary}'"
-                                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY='${libevent_binary}'"
-                                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY='${libevent_binary}'"
-                                "-DCMAKE_INSTALL_PREFIX='${libevent_install}'")
-    foreach(item ${libevent_cmake_args})
-        list(APPEND libevent_build_options "${item}")
-    endforeach()
-    set(libevent_terminal_options   USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
-                                    USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
-    set(libevent_steps install)
-    # 开始构建
-    ExternalProject_Add("thrid-${libevent_name}"    DOWNLOAD_DIR "${libevent_download}" SOURCE_DIR "${libevent_source}"
-                                                    ${libevent_url_options} CMAKE_ARGS ${libevent_build_options}
-                                                    ${libevent_terminal_options} STEP_TARGETS ${libevent_steps})
-    # 设置include
-    set("${libevent_name}_includes" "${libevent_install}/include" PARENT_SCOPE)
-    # 设置文件
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-            set(lib_path "${libevent_binary}/${CMAKE_BUILD_TYPE}")
-        else()
-            set(lib_path "${libevent_binary}")
-        endif()
-    else()
-        set(lib_path "${libevent_install}/lib")
-    endif()
+# guess target file name
+#   name:       binary name
+#   lib_prefix: lib prefix name
+#   lib_suffix: lib suffix name
+#   bin_prefix: bin prefix name
+#   bin_suffix: bin suffix name
+function(guess_binary_file)
+    # params
+    cmake_parse_arguments(file "" "name;lib_prefix;lib_suffix;bin_prefix;bin_suffix" "" ${ARGN})
+    # set default
     if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
-        if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-            set(lib_suffix "lib")
-            set(bin_suffix "dll")
-        endif()
-        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        if(MSVC)
+            set(lib_extension ".lib")
+            set(bin_extension ".dll")
+        elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set(lib_extension ".a")
             set(lib_prefix "lib")
-            set(lib_suffix "dll.a")
-            set(bin_suffix "dll")
-        endif()
-        if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+            set(lib_suffix ".dll")
+            set(bin_extension ".dll")
+            set(bin_prefix "lib")
+        elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+            message(FATAL_ERROR "TODO Setting ...")
+        else()
             message(FATAL_ERROR "TODO Setting ...")
         endif()
+    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
+        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set(lib_extension ".a")
+            set(lib_prefix "lib")
+            set(bin_extension ".so")
+            set(lib_prefix "lib")
+        endif()
+    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
+        message(FATAL_ERROR "TODO Setting ...")
     else()
         message(FATAL_ERROR "TODO Setting ...")
     endif()
-    set(event_lib_file          "${lib_path}/${lib_prefix}event.${lib_suffix}")
-    set(event_core_lib_file     "${lib_path}/${lib_prefix}event_core.${lib_suffix}")
-    set(event_extra_lib_file    "${lib_path}/${lib_prefix}event_extra.${lib_suffix}")
-    set(event_openssl_lib_file  "${lib_path}/${lib_prefix}event_openssl.${lib_suffix}")
-    set(event_pthreads_lib_file "${lib_path}/${lib_prefix}event_pthreads.${lib_suffix}")
-    set(event_bin_file          "${lib_path}/${lib_prefix}event.${bin_suffix}")
-    set(event_core_bin_file     "${lib_path}/${lib_prefix}event_core.${bin_suffix}")
-    set(event_extra_bin_file    "${lib_path}/${lib_prefix}event_extra.${bin_suffix}")
-    set(event_openssl_bin_file  "${lib_path}/${lib_prefix}event_openssl.${bin_suffix}")
-    set(event_pthreads_bin_file "${lib_path}/${lib_prefix}event_pthreads.${bin_suffix}")
-    # 设置目标
-    add_library("${libevent_name}"                  "${libevent_library_type}" IMPORTED GLOBAL)
-    add_library("${libevent_name}_core"             "${libevent_library_type}" IMPORTED GLOBAL)
-    add_library("${libevent_name}_extra"            "${libevent_library_type}" IMPORTED GLOBAL)
-    add_dependencies("${libevent_name}"             "thrid-${libevent_name}-install" ${libevent_depends})
-    add_dependencies("${libevent_name}_core"        "thrid-${libevent_name}-install" ${libevent_depends})
-    add_dependencies("${libevent_name}_extra"       "${libevent_name}_core")
-    set_target_properties("${libevent_name}"        PROPERTIES IMPORTED_IMPLIB "${event_lib_file}")
-    set_target_properties("${libevent_name}_core"   PROPERTIES IMPORTED_IMPLIB "${event_core_lib_file}")
-    set_target_properties("${libevent_name}_extra"  PROPERTIES IMPORTED_IMPLIB "${event_extra_lib_file}")
-    if(NOT ${libevent_disable_openssl})
-        add_library("${libevent_name}_openssl"              "${libevent_library_type}" IMPORTED GLOBAL)
-        add_dependencies("${libevent_name}_openssl"         "${libevent_name}_core")
-        set_target_properties("${libevent_name}_openssl"    PROPERTIES IMPORTED_IMPLIB "${event_openssl_lib_file}")
+    # set prefix/suffix
+    if(NOT ("${lib_prefix}" STREQUAL "${file_lib_prefix}"))
+        set(lib_prefix "${file_lib_prefix}")
     endif()
-    if((NOT ${libevent_disable_thread_support}) AND (NOT WIN32))
-        add_library("${libevent_name}_pthreads"             "${libevent_library_type}" IMPORTED GLOBAL)
-        add_dependencies("${libevent_name}_pthreads"        "${libevent_name}_core")
-        set_target_properties("${libevent_name}_pthreads"   PROPERTIES IMPORTED_IMPLIB "${event_pthreads_lib_file}")
+    if(NOT ("${lib_suffix}" STREQUAL "${file_lib_suffix}"))
+        set(lib_suffix "${file_lib_suffix}")
     endif()
-    if("${libevent_library_type}" STREQUAL "SHARED")
-        set_target_properties("${libevent_name}"        PROPERTIES IMPORTED_LOCATION "${event_bin_file}")
-        set_target_properties("${libevent_name}_core"   PROPERTIES IMPORTED_LOCATION "${event_core_bin_file}")
-        set_target_properties("${libevent_name}_extra"  PROPERTIES IMPORTED_LOCATION "${event_extra_bin_file}")
-        if(NOT ${libevent_disable_openssl})
-            set_target_properties("${libevent_name}_openssl" PROPERTIES IMPORTED_LOCATION "${event_openssl_bin_file}")
+    if(NOT ("${bin_prefix}" STREQUAL "${file_bin_prefix}"))
+        set(bin_prefix "${file_bin_prefix}")
+    endif()
+    if(NOT ("${bin_suffix}" STREQUAL "${file_bin_suffix}"))
+        set(bin_suffix "${file_bin_suffix}")
+    endif()
+    set("${file_name}_lib" "${lib_prefix}${file_name}${lib_suffix}${lib_extension}" PARENT_SCOPE)
+    set("${file_name}_bin" "${bin_prefix}${file_name}${bin_suffix}${bin_extension}" PARENT_SCOPE)
+endfunction()
+
+# name:     target name
+# prefix:   prefix path
+# version:  packages version
+# deps:     deps target
+# ARGN: this will add this to build cmake args
+#   EVENT__DISABLE_TESTS:       ON
+#   EVENT__DISABLE_REGRESS:     ON
+#   EVENT__DISABLE_SAMPLES:     ON
+#   EVENT__DISABLE_BENCHMARK:   ON
+function(add_libevent2)
+    # params
+    cmake_parse_arguments(libevent2 "" "name;prefix;version;proxy" "deps" ${ARGN})
+    # if target exist, return
+    if(DEFINED "${libevent2_name}-includes")
+        return()
+    endif()
+    # set pkg name
+    set(pkg_name "pkg-${libevent2_name}")
+    # check is build shared/static
+    get_cmake_args(arg "BUILD_SHARED_LIBS" default "${BUILD_SHARED_LIBS}" result "libevent2_build_shared" args_list_name "libevent2_UNPARSED_ARGUMENTS")
+    # check is build debug/release
+    get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "libevent2_build_type" args_list_name "libevent2_UNPARSED_ARGUMENTS")
+    # address
+    set(libevent2_repository_url        "https://github.com/libevent/libevent")
+    list(APPEND libevent2_version_list  "2.1.12")
+    list(APPEND libevent2_hash_list     "8836AD722AB211DE41CB82FE098911986604F6286F67D10DFB2B6787BF418F49")
+    # input version is in version list
+    string(STRIP "${libevent2_version}" libevent2_version)
+    if("${libevent2_version}" STREQUAL "")
+        set(libevent2_version_index 0)
+        list(GET libevent2_version_list ${libevent2_version_index} libevent2_version)
+    else()
+        list(FIND libevent2_version_list "${libevent2_version}" libevent2_version_index)
+    endif()
+    if(libevent2_version_index GREATER_EQUAL 0)
+        set(libevent2_url   "${libevent2_repository_url}/archive/refs/tags/release-${libevent2_version}-stable.zip")
+        set(libevent2_file  "libevent2-${libevent2_version}.zip")
+        list(GET libevent2_hash_list ${libevent2_version_index} libevent2_hash)
+    endif()
+    # set build path
+    set(libevent2_download  "${libevent2_prefix}/cache/download")
+    set(libevent2_install   "${libevent2_prefix}/cache/install/${libevent2_name}/${libevent2_build_type}")
+    set(libevent2_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
+    set(libevent2_source    "${libevent2_prefix}/${libevent2_name}")
+    if(MSVC)
+        set(libevent2_binary "${libevent2_prefix}/cache/bin/${libevent2_name}")
+    else()
+        set(libevent2_binary "${libevent2_prefix}/cache/bin/${libevent2_name}/${libevent2_build_type}")
+    endif()
+    # build option
+    set(libevent2_cmake_options #default options
+                                "-DEVENT__DISABLE_TESTS=ON"
+                                "-DEVENT__DISABLE_REGRESS=ON"
+                                "-DEVENT__DISABLE_SAMPLES=ON"
+                                "-DEVENT__DISABLE_BENCHMARK=ON"
+                                # default set shared/static
+                                "-DBUILD_SHARED_LIBS=${libevent2_build_shared}"
+                                # default set debug/release
+                                "-DCMAKE_BUILD_TYPE=${libevent2_build_type}"
+                                # default set lib/exe build path
+                                "-DLIBRARY_OUTPUT_PATH='${libevent2_binary}'"
+                                "-DEXECUTABLE_OUTPUT_PATH='${libevent2_binary}'"
+                                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY='${libevent2_binary}'"
+                                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY='${libevent2_binary}'"
+                                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY='${libevent2_binary}'"
+                                # default set lib install path
+                                "-DCMAKE_INSTALL_PREFIX='${libevent2_install}'"
+                                "-DCMAKE_INSTALL_LIBDIR='${libevent2_install}/lib'"
+                                "-DCMAKE_INSTALL_BINDIR='${libevent2_install}/bin'"
+                                "-DCMAKE_INSTALL_INCLUDEDIR='${libevent2_install}/include'"
+                                # default set compile flags
+                                "-DCMAKE_C_FLAGS='${CMAKE_C_FLAGS}'"
+                                "-DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}'"
+                                "-DCMAKE_C_FLAGS_DEBUG='${CMAKE_C_FLAGS_DEBUG}'"
+                                "-DCMAKE_C_FLAGS_RELEASE='${CMAKE_C_FLAGS_RELEASE}'"
+                                "-DCMAKE_CXX_FLAGS_DEBUG='${CMAKE_CXX_FLAGS_DEBUG}'"
+                                "-DCMAKE_CXX_FLAGS_RELEASE='${CMAKE_CXX_FLAGS_RELEASE}'")
+    # add other build args
+    replace_cmake_args("libevent2_UNPARSED_ARGUMENTS" "libevent2_cmake_options")
+    # is install
+    if(MSVC)
+        set(libevent2_build_cmd BUILD_COMMAND COMMAND "${CMAKE_COMMAND}" --build "${libevent2_build}" --config "${libevent2_build_type}")
+        set(libevent2_install_cmd INSTALL_COMMAND COMMAND "${CMAKE_COMMAND}" --build "${libevent2_build}" --config "${libevent2_build_type}" --target INSTALL)
+    endif()
+    # set git config
+    if(NOT ("" STREQUAL "${libevent2_proxy}"))
+        set(git_config GIT_CONFIG http.proxy=${libevent2_proxy} https.proxy=${libevent2_proxy})
+    endif()
+    # set url option
+    if(${libevent2_version_index} GREATER_EQUAL 0)
+        set(libevent2_url_option URL "${libevent2_url}" URL_HASH SHA256=${libevent2_hash} DOWNLOAD_NAME "${libevent2_file}")
+    else()
+        set(libevent2_url_option    GIT_REPOSITORY "${libevent2_repository_url}" GIT_TAG "${libevent2_version}"
+                                    GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
+    endif()
+    # start build
+    ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${libevent2_download}" SOURCE_DIR "${libevent2_source}"
+                                        ${libevent2_url_option} CMAKE_ARGS ${libevent2_cmake_options} EXCLUDE_FROM_ALL ON
+                                        ${libevent2_build_cmd} ${libevent2_install_cmd} DEPENDS ${libevent2_deps}
+                                        USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
+                                        USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
+    # set lib path dir
+    set("${libevent2_name}-includes"    "${libevent2_install}/include"              PARENT_SCOPE)
+    set("${libevent2_name}-cmake"       "${libevent2_install}/lib/cmake/libevent"   PARENT_SCOPE)
+    set("${libevent2_name}-pkgconfig"   "${libevent2_install}/lib/pkgconfig"        PARENT_SCOPE)
+    set("${libevent2_name}-root"        "${libevent2_install}"                      PARENT_SCOPE)
+    set("${libevent2_name}-source"      "${libevent2_source}"                       PARENT_SCOPE)
+    set(lib_path "${libevent2_install}/lib")
+    set(bin_path "${libevent2_install}/lib")
+    # check is build shared/static
+    if(libevent2_build_shared)
+        add_library("${libevent2_name}" SHARED IMPORTED GLOBAL)
+    else()
+        add_library("${libevent2_name}" STATIC IMPORTED GLOBAL)
+    endif()
+    add_dependencies("${libevent2_name}" "${pkg_name}")
+    # guess file
+    guess_binary_file(name "event")
+    # add library
+    set_target_properties("${libevent2_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${event_lib}")
+    if(libevent2_build_shared)
+        set_target_properties("${libevent2_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${event_bin}")
+    endif()
+    # set binary list
+    set(binary_list "core" "extra" "openssl")
+    # set target
+    foreach(item IN LISTS binary_list)
+        # check is build shared/static
+        if(libevent2_build_shared)
+            add_library("${libevent2_name}::${item}" SHARED IMPORTED GLOBAL)
+        else()
+            add_library("${libevent2_name}::${item}" STATIC IMPORTED GLOBAL)
         endif()
-        if((NOT ${libevent_disable_thread_support}) AND (NOT WIN32))
-            set_target_properties("${libevent_name}_pthreads" PROPERTIES IMPORTED_LOCATION "${event_pthreads_bin_file}")
+        add_dependencies("${libevent2_name}::${item}" "${pkg_name}")
+        # guess file
+        guess_binary_file(name "event_${item}")
+        # add library
+        set_target_properties("${libevent2_name}::${item}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${event_${item}_lib}")
+        if(libevent2_build_shared)
+            set_target_properties("${libevent2_name}::${item}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${event_${item}_bin}")
         endif()
-    endif()
+    endforeach()
 endfunction()

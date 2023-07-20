@@ -182,7 +182,7 @@ function(add_mysql_connector_cpp)
     # params
     cmake_parse_arguments(mysql "" "name;prefix;version;proxy" "deps" ${ARGN})
     # if target exist, return
-    if(TARGET "${mysql_name}" OR (DEFINED "${mysql_name}-includes"))
+    if(DEFINED "${mysql_name}-includes")
         return()
     endif()
     # set pkg name

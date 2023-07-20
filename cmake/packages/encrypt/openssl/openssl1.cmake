@@ -189,7 +189,7 @@ function(add_openssl1)
     # params
     cmake_parse_arguments(openssl1 "" "name;prefix;version;proxy;nasm;perl;zlib_dir" "options;deps" ${ARGN})
     # if target exist, return
-    if(TARGET "${openssl1_name}" OR (DEFINED "${openssl1_name}-includes"))
+    if(DEFINED "${openssl1_name}-includes")
         return()
     endif()
     # get nasm/perl

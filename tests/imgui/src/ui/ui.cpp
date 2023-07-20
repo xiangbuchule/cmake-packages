@@ -13,9 +13,70 @@
 std::shared_ptr<Layer> ui() noexcept {
     auto layer         = std::make_shared<Layer>();
     layer->render_call = [](std::shared_ptr<State> state) {
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("窗口")) {
+                if (ImGui::MenuItem(OPTION_WINDOW_NAME, nullptr, &OPTION_WINDOW_OPEN, true)) {
+                }
+                if (ImGui::MenuItem(SEARCH_MYSQL_DATA_EXPORT_WINDOW_NAME, nullptr, &SEARCH_MYSQL_DATA_EXPORT_WINDOW_OPEN, true)) {
+                }
+                if (ImGui::MenuItem(READ_SQL_DATA_IMPORT_WINDOW_NAME, nullptr, &READ_SQL_DATA_IMPORT_WINDOW_OPEN, true)) {
+                }
+                if (ImGui::MenuItem(LOG_WINDOW_NAME, nullptr, &LOG_WINDOW_OPEN, true)) {
+                }
+                if (ImGui::MenuItem(TASK_WINDOW_NAME, nullptr, &TASK_WINDOW_OPEN, true)) {
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("主题")) {
+                bool dark_select    = false;
+                bool light_select   = false;
+                bool classic_select = false;
+                bool custom_select  = false;
+                switch (THEME_STYLE) {
+                    case ThemeStyle::CUSTOM:
+                        custom_select = true;
+                        break;
+                    case ThemeStyle::CLASSIC:
+                        classic_select = true;
+                        break;
+                    case ThemeStyle::LIGHT:
+                        light_select = true;
+                        break;
+                    case ThemeStyle::DARK:
+                        dark_select = true;
+                        break;
+                    default:
+                        break;
+                }
+                if (ImGui::MenuItem("黑暗", nullptr, &dark_select, true)) {
+                    ImGui::StyleColorsDark();
+                    THEME_STYLE = ThemeStyle::DARK;
+                }
+                if (ImGui::MenuItem("明亮", nullptr, &light_select, true)) {
+                    ImGui::StyleColorsLight();
+                    THEME_STYLE = ThemeStyle::LIGHT;
+                }
+                if (ImGui::MenuItem("经典", nullptr, &classic_select, true)) {
+                    ImGui::StyleColorsClassic();
+                    THEME_STYLE = ThemeStyle::CLASSIC;
+                }
+                if (ImGui::MenuItem("详细", nullptr, &custom_select, false)) {
+                    THEME_STYLE = ThemeStyle::CUSTOM;
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("关于")) {
+                if (ImGui::MenuItem(HELP_WINDOW_NAME, nullptr, &HELP_WINDOW_OPEN, true)) {
+                }
+                if (ImGui::MenuItem(DEMO_WINDOW_NAME, nullptr, &DEMO_WINDOW_OPEN, true)) {
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
         // imgui ui content
         ImGuiDockNodeFlags   dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar;
-        ImGuiWindowFlags     window_flags    = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags     window_flags    = ImGuiWindowFlags_NoDocking;
         const ImGuiViewport *viewport        = ImGui::GetMainViewport();
         ImGuiIO             &io              = ImGui::GetIO();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -49,29 +110,6 @@ std::shared_ptr<Layer> ui() noexcept {
                     ImGui::DockBuilderDockWindow(SEARCH_MYSQL_DATA_EXPORT_WINDOW_NAME, remain_dockspace);
                     ImGui::DockBuilderFinish(dockspace_id);
                 }
-            }
-            if (ImGui::BeginMenuBar()) {
-                if (ImGui::BeginMenu("窗口")) {
-                    if (ImGui::MenuItem(OPTION_WINDOW_NAME, nullptr, &OPTION_WINDOW_OPEN, true)) {
-                    }
-                    if (ImGui::MenuItem(SEARCH_MYSQL_DATA_EXPORT_WINDOW_NAME, nullptr, &SEARCH_MYSQL_DATA_EXPORT_WINDOW_OPEN, true)) {
-                    }
-                    if (ImGui::MenuItem(READ_SQL_DATA_IMPORT_WINDOW_NAME, nullptr, &READ_SQL_DATA_IMPORT_WINDOW_OPEN, true)) {
-                    }
-                    if (ImGui::MenuItem(LOG_WINDOW_NAME, nullptr, &LOG_WINDOW_OPEN, true)) {
-                    }
-                    if (ImGui::MenuItem(TASK_WINDOW_NAME, nullptr, &TASK_WINDOW_OPEN, true)) {
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("关于")) {
-                    if (ImGui::MenuItem(HELP_WINDOW_NAME, nullptr, &HELP_WINDOW_OPEN, true)) {
-                    }
-                    if (ImGui::MenuItem(DEMO_WINDOW_NAME, nullptr, &DEMO_WINDOW_OPEN, true)) {
-                    }
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMenuBar();
             }
             ImGui::End();
         } else {

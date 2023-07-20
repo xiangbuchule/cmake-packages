@@ -156,8 +156,19 @@ add_openssl3(
     version "3.2.1"
     nasm    "${nasm-2.16.01-path}"
     perl    "${perl-5.36.1.1-path}"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
+)
+
+# libevent
+include("${custom_module}/packages/io/libevent/libevent2.cmake")
+add_libevent2(
+    name    "libevent2-2.1.12"
+    prefix  "${third_path}"
+    version "2.1.12"
+    deps    "pkg-openssl1-1.1.1w"
+    proxy   "${socks5_proxy}"
+    "-DOPENSSL_ROOT_DIR=${openssl1-1.1.1w-root}"
 )
 
 # boost
@@ -264,21 +275,22 @@ add_imgui(
 # mysql8
 include("${custom_module}/packages/database/mysql/mysql8.cmake")
 add_mysql8(
-    name    "mysql8-8.3.0"
-    version "8.3.0"
-    deps    "pkg-openssl1-1.1.1w" "pkg-zstd-1.5.5" "pkg-lz4-1.9.4" "pkg-zlib-1.3.1"
-    prefix  "${third_path}"
-    proxy   "${socks5_proxy}"
+    name        "mysql8-8.3.0"
+    version     "8.3.0"
+    deps        "pkg-openssl1-1.1.1w" "pkg-zstd-1.5.5" "pkg-lz4-1.9.4" "pkg-zlib-1.3.1"
+                "pkg-libevent2-2.1.12"
+    prefix      "${third_path}"
+    proxy       "${socks5_proxy}"
+    zstd        "${zstd-1.5.5-root}"
+    libevent    "${libevent2-2.1.12-root}"
+    lz4         "${lz4-1.9.4-root}"
+    "-DWITHOUT_SERVER=ON" "-DWITH_ROUTER=OFF" "-DWITH_UNIT_TESTS=OFF" "-DWITH_NDB=OFF"
     "-DWITH_SSL=${openssl1-1.1.1w-root}"
     "-DWITH_ZLIB=system"
     "-DZLIB_ROOT=${zlib-1.3.1-root}"
-    # "-DWITH_ZSTD=system"
-    # zstd    "${zstd-1.5.5-root}"
+    "-DWITH_ZSTD=system"
     "-DWITH_LZ4=system"
-    lz4 "${lz4-1.9.4-root}"
-    # "-DBISON_EXECUTABLE="
-    "-DWITH_NDB=OFF"
-    "-DWITHOUT_SERVER=ON" "-DWITH_ROUTER=OFF" "-DWITH_UNIT_TESTS=OFF"
+    "-DWITH_LIBEVENT=system"
 )
 
 # mysql-connecter-c
@@ -295,11 +307,14 @@ add_mysql_connector_cpp(
     name    "mysql-connector-cpp-8.3.0"
     version "8.3.0"
     deps    "pkg-openssl1-1.1.1w" "pkg-zlib-1.3.1" "pkg-mysql8-8.3.0"
+            "pkg-zstd-1.5.5" "pkg-lz4-1.9.4"
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
     "-DWITH_SSL=${openssl1-1.1.1w-root}"
     "-DWITH_JDBC=ON" "-DWITH_MYSQL=${mysql8-8.3.0-root}"
     "-DWITH_ZLIB=${zlib-1.3.1-root}"
+    "-DWITH_LZ4=${lz4-1.9.4-root}"
+    "-DWITH_ZSTD=${zstd-1.5.5-root}"
 )
 
 # rapidjson
