@@ -22,7 +22,7 @@ list(APPEND extra_source_file   "${extra_source_path}/icons.cpp"
 add_executable(${PROJECT_NAME} ${source_file} ${extra_source_file})
 # 目标依赖项
 # glad 需要 --mx --loader 构建
-add_dependencies(${PROJECT_NAME} glad-2.0.4 glfw3-3.3.9 stb-master imgui-1.90.1-docking)
+add_dependencies(${PROJECT_NAME} glad2-2.0.4 glfw3-3.3.9 stb-master imgui-1.90.1-docking)
 # 目标include
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
@@ -45,6 +45,6 @@ endif()
 add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glad-2.0.4>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glad2-2.0.4>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glfw3-3.3.9>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
 )

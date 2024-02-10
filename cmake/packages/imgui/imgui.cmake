@@ -1,14 +1,12 @@
 include(ExternalProject)
 
-# git_shallow:
-#   "git clone" will add "--depth 1". if set it,
 # name: target name
 # prefix: prefix path
 # version: packages version
 # deps: deps target
 function(add_imgui)
     # params
-    cmake_parse_arguments(imgui "" "name;prefix;version;freetype;backends;proxy" "deps" ${ARGN})
+    cmake_parse_arguments(imgui "" "name;prefix;version;freetype;proxy" "backends;deps" ${ARGN})
     # if target exist, return
     if(TARGET "${imgui_name}" OR (DEFINED "${imgui_name}-includes"))
         return()
@@ -27,18 +25,26 @@ function(add_imgui)
                                         PATCH_COMMAND "" CONFIGURE_COMMAND "" BUILD_COMMAND "" INSTALL_COMMAND ""
                                         USES_TERMINAL_DOWNLOAD ON USES_TERMINAL_UPDATE ON
                                         DEPENDS ${imgui_deps} ${imgui_UNPARSED_ARGUMENTS})
+    # set source/include
+    set(includes_paths "${imgui_source}" "${imgui_source}/backends")
+    set(sources_files  "${imgui_source}/imgui.cpp"
+                        "${imgui_source}/imgui_demo.cpp"
+                        "${imgui_source}/imgui_draw.cpp"
+                        "${imgui_source}/imgui_tables.cpp"
+                        "${imgui_source}/imgui_widgets.cpp")
+    foreach(item IN LISTS imgui_backends imgui_UNPARSED_ARGUMENTS)
+        list(APPEND sources_files "${imgui_source}/backends/imgui_impl_${item}.cpp")
+    endforeach()
+    if("${imgui_freetype}")
+        list(APPEND includes_paths "${imgui_source}/misc/freetype")
+        list(APPEND sources_files "${imgui_source}/misc/freetype/imgui_freetype.cpp")
+    endif()
     # set library
     add_library("${imgui_name}" INTERFACE)
-    target_include_directories("${imgui_name}" INTERFACE "${imgui_source}" "${imgui_source}/backends/imgui_impl_${imgui_backends}.h")
-    target_sources("${imgui_name}" INTERFACE    "${imgui_source}/imgui.cpp" "${imgui_source}/imgui_demo.cpp"
-                                                "${imgui_source}/imgui_draw.cpp" "${imgui_source}/imgui_tables.cpp"
-                                                "${imgui_source}/imgui_widgets.cpp"
-                                                "${imgui_source}/backends/imgui_impl_${imgui_backends}.cpp")
-    if("${imgui_freetype}")
-        target_include_directories("${imgui_name}" INTERFACE "${imgui_source}/misc/freetype/imgui_freetype.h")
-        target_sources("${imgui_name}" INTERFACE "${imgui_source}/misc/freetype/imgui_freetype.cpp")
-    endif()
+    target_include_directories("${imgui_name}" INTERFACE ${includes_paths})
+    target_sources("${imgui_name}" INTERFACE ${sources_files})
     add_dependencies("${imgui_name}" "${pkg_name}")
     # set include
-    set("${imgui_name}-includes" "${imgui_source}" PARENT_SCOPE)
+    set("${imgui_name}-sources"     ${sources_files}    PARENT_SCOPE)
+    set("${imgui_name}-includes"    ${includes_paths}   PARENT_SCOPE)
 endfunction()

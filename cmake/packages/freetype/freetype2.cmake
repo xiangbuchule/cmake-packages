@@ -147,11 +147,12 @@ endfunction()
 # version: packages version
 # deps: deps target
 # ARGN: this will add this to build cmake args
-#   GLFW_BUILD_EXAMPLES:    ON
-#   GLFW_BUILD_TESTS:       ON
-#   GLFW_BUILD_DOCS:        ON
-#   GLFW_INSTALL:           ON
-#   GLFW_VULKAN_STATIC:     OFF
+#   FT_DISABLE_ZLIB:            OFF
+#   FT_DISABLE_BZIP2:           OFF
+#   FT_DISABLE_PNG:             OFF
+#   FT_DISABLE_HARFBUZZ:        OFF
+#   FT_DISABLE_BROTLI:          OFF
+#   FT_ENABLE_ERROR_STRINGS:    OFF
 function(add_freetype2)
     # params
     cmake_parse_arguments(freetype "" "name;prefix;version;proxy" "deps" ${ARGN})
@@ -167,9 +168,9 @@ function(add_freetype2)
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "freetype_build_type" args_list_name "freetype_UNPARSED_ARGUMENTS")
     # address
     set(freetype_repository_url         "https://github.com/freetype/freetype")
-    list(APPEND freetype_version_list   "3.3.8" "3.3.9")
-    list(APPEND freetype_hash_list      "4D025083CC4A3DD1F91AB9B9BA4F5807193823E565A5BCF4BE202669D9911EA6"
-                                        "55261410F8C3A9CC47CE8303468A90F40A653CD8F25FB968B12440624FB26D08")
+    list(APPEND freetype_version_list   "2.13.2" "2.13.1")
+    list(APPEND freetype_hash_list      "F7DE808A11F00C537A214B0F19D62EEA91ADEF569B871AA8B419BD93605E4E25"
+                                        "E1D20DB0DA972EBCFF3DE8E98CDC429FACF199AD3DE29DB2D03ED0EFC7352761")
     # input version is in version list
     string(STRIP "${freetype_version}" freetype_version)
     if("${freetype_version}" STREQUAL "")

@@ -22,7 +22,7 @@ file(GLOB_RECURSE RC_SOURCE_FILE "${extra_source_path}/*.c")
 add_executable(${PROJECT_NAME} ${RC_SOURCE_FILE} ${COMMON_SOURCE_FILE} ${MAIN_SOURCE_FILE})
 # 目标依赖项
 # glad 需要 --mx --loader 构建
-add_dependencies(${PROJECT_NAME} glad-2.0.4-mx glfw3-3.3.9 stb-master)
+add_dependencies(${PROJECT_NAME} glad2-2.0.4-mx glfw3-3.3.9 stb-master)
 # 目标include
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
@@ -32,7 +32,7 @@ target_include_directories(
     "${glfw3-3.3.9-includes}"
 )
 # 目标链接项
-target_link_libraries(${PROJECT_NAME} glad-2.0.4-mx glfw3-3.3.9 stb-master)
+target_link_libraries(${PROJECT_NAME} glad2-2.0.4-mx glfw3-3.3.9 stb-master)
 if(MSVC)
     set(new_link_flags "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
     get_target_property(old_link_flags ${PROJECT_NAME} LINK_FLAGS)
@@ -45,6 +45,6 @@ endif()
 add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glad-2.0.4-mx>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glad2-2.0.4-mx>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:glfw3-3.3.9>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
 )

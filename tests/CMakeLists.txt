@@ -59,6 +59,15 @@ add_glad2(
 include("${custom_module}/packages/stb/stb.cmake")
 add_stb(name "stb-master" version "master" prefix "${third_path}" proxy "${socks5_proxy}")
 
+# freetype2
+include("${custom_module}/packages/freetype/freetype2.cmake")
+add_freetype2(
+    name    "freetype2-2.13.2"
+    version "2.13.2"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+)
+
 # imgui
 include("${custom_module}/packages/imgui/imgui.cmake")
 add_imgui(
@@ -66,7 +75,8 @@ add_imgui(
     version "v1.90.1-docking"
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
-    deps    "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9"
+    deps    "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
+    freetype ON
 )
 
 # ==================================================
