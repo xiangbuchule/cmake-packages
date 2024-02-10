@@ -21,18 +21,27 @@ list(APPEND extra_source_file   "${extra_source_path}/icons.cpp"
 # 构建目标
 add_executable(${PROJECT_NAME} ${source_file} ${extra_source_file})
 # 目标依赖项
-# glad 需要 --mx --loader 构建
-add_dependencies(${PROJECT_NAME} glad2-2.0.4 glfw3-3.3.9 stb-master imgui-1.90.1-docking)
+add_dependencies(${PROJECT_NAME} glad2-2.0.4 glfw3-3.3.9 stb-master freetype2-2.13.2 imgui-1.90.1-docking)
 # 目标include
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     "${extra_source_path}"
-    "${glad-2.0.4-includes}"
+    "${glad2-2.0.4-includes}"
     "${glfw3-3.3.9-includes}"
+    "${freetype2-2.13.2-includes}"
+)
+# 声明一下imgui-1.90.1-docking中的源文件是被生成的
+# 防止generate阶段报错找不到源文件
+add_custom_command(
+    OUTPUT ${imgui-1.90.1-docking-sources}
+    COMMAND echo imgui source files will be created
+    USES_TERMINAL ON
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.1-docking-sources}
 )
 # 目标链接项
-target_link_libraries(${PROJECT_NAME} glad-2.0.4 glfw3-3.3.9 stb-master)
+target_link_libraries(${PROJECT_NAME} glad2-2.0.4 glfw3-3.3.9 stb-master freetype2-2.13.2 imgui-1.90.1-docking)
 if(MSVC)
     set(new_link_flags "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
     get_target_property(old_link_flags ${PROJECT_NAME} LINK_FLAGS)

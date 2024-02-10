@@ -229,7 +229,7 @@ function(add_freetype2)
     endif()
     # set git config
     if(NOT ("" STREQUAL "${freetype_proxy}"))
-        set(git_config GIT_CONFIG http.proxy="${freetype_proxy}" https.proxy="${freetype_proxy}")
+        set(git_config GIT_CONFIG http.proxy=${freetype_proxy} https.proxy=${freetype_proxy})
     endif()
     # set url option
     if(${freetype_version_index} GREATER_EQUAL 0)

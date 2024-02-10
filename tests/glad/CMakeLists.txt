@@ -28,7 +28,7 @@ target_include_directories(
     ${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     "${extra_source_path}"
-    "${glad-2.0.4-mx-includes}"
+    "${glad2-2.0.4-mx-includes}"
     "${glfw3-3.3.9-includes}"
 )
 # 目标链接项

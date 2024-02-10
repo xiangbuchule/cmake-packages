@@ -11,12 +11,6 @@ function(glad2_patch_script)
     # set params
     set(script_content "\
 # set glad info
-if(\${CMAKE_HOST_SYSTEM_NAME} STREQUAL \"Windows\")
-    string(REPLACE \"/\" \"\\\" add_env \"${glad2_env_v}\")
-else()
-    string(REPLACE \"\\\" \"/\" add_env \"${glad2_env_v}\")
-endif()
-set(ENV{${glad2_env_k}} \"\${add_env};\$ENV{${glad2_env_k}}\")
 set(glad_source         \"${glad2_source}\")
 set(glad_proxy          \"${glad2_proxy}\")
 # write CMakeLists.txt content

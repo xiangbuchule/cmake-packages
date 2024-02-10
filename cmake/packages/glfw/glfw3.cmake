@@ -125,7 +125,7 @@ function(add_glfw3)
     endif()
     if(glfw3_version_index GREATER_EQUAL 0)
         set(glfw3_url   "${glfw3_repository_url}/releases/download/${glfw3_version}/glfw-${glfw3_version}.zip")
-        set(glfw3_file  "glfw-${glfw3_version}.zip")
+        set(glfw3_file  "glfw3-${glfw3_version}.zip")
         list(GET glfw3_hash_list ${glfw3_version_index} glfw3_hash)
     endif()
     # set build path
@@ -177,7 +177,7 @@ function(add_glfw3)
     endif()
     # set git config
     if(NOT ("" STREQUAL "${glfw3_proxy}"))
-        set(git_config GIT_CONFIG http.proxy="${glfw3_proxy}" https.proxy="${glfw3_proxy}")
+        set(git_config GIT_CONFIG http.proxy=${glfw3_proxy} https.proxy=${glfw3_proxy})
     endif()
     # set url option
     if(${glfw3_version_index} GREATER_EQUAL 0)

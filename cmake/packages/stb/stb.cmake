@@ -17,7 +17,7 @@ function(add_stb)
     set(stb_source "${stb_prefix}/${stb_name}")
     # set git config
     if(NOT ("" STREQUAL "${std_proxy}"))
-        set(git_config GIT_CONFIG http.proxy="${std_proxy}" https.proxy="${std_proxy}")
+        set(git_config GIT_CONFIG http.proxy=${std_proxy} https.proxy=${std_proxy})
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   GIT_REPOSITORY "https://github.com/nothings/stb" GIT_TAG "${stb_version}"

@@ -17,7 +17,7 @@ function(add_imgui)
     set(imgui_source "${imgui_prefix}/${imgui_name}")
     # set git config
     if(NOT ("" STREQUAL "${imgui_proxy}"))
-        set(git_config GIT_CONFIG http.proxy="${imgui_proxy}" https.proxy="${imgui_proxy}")
+        set(git_config GIT_CONFIG http.proxy=${imgui_proxy} https.proxy=${imgui_proxy})
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   GIT_REPOSITORY "https://github.com/ocornut/imgui" GIT_TAG "${imgui_version}"
