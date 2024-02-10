@@ -183,5 +183,5 @@ function(add_python3)
         add_dependencies("${target_name}" ${python3_deps})
     endif()
     # set python path
-    set("${python3_name}_path" "${python3_source}" PARENT_SCOPE)
+    set("${python3_name}-path" "${python3_source}" PARENT_SCOPE)
 endfunction()

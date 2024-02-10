@@ -4,13 +4,11 @@ include(ExternalProject)
 # script:   script file save path
 # source:   source code path
 # proxy:    build use proxy
-# env_k:    add env key
-# env_v:    add env value
+# python:   python path dir
 function(glad2_patch_script)
     # params
-    cmake_parse_arguments(glad2 "" "script;source;proxy;env_k;env_v" "" ${ARGN})
+    cmake_parse_arguments(glad2 "" "script;source;proxy;python" "" ${ARGN})
     # set params
-    string(REPLACE \"/\" \"\\\" <out-var> <input>...)
     set(script_content "\
 # set glad info
 if(\${CMAKE_HOST_SYSTEM_NAME} STREQUAL \"Windows\")
@@ -38,7 +36,17 @@ if(CMAKE_VERSION VERSION_GREATER 3.8)
     # Enable IPO for CMake versions that support it
     cmake_policy(SET CMP0069 NEW)
 endif()
+]])
+    if(NOT ("" STREQUAL "${glad2_python}"))
+        if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
+            string(REPLACE "/" "\\\\" glad2_python "${glad2_python}")
+        else()
+            string(REPLACE "\\" "/" glad2_python "${glad2_python}")
+        endif()
+        string(APPEND cmake_build_content "set(ENV{PATH} \"${glad2_python};\$ENV{PATH}\")\n")
+    endif()
 
+    string(APPEND cmake_build_content [[
 project(GLAD LANGUAGES C)
 # include function
 include(cmake/CMakeLists.txt)
@@ -331,8 +339,7 @@ endfunction()
 # prefix:   prefix path
 # version:  packages version
 # proxy:    install glad proxy
-# env_k:    add env key
-# env_v:    add env value
+# python:   python path dir
 # deps:     deps target
 # ARGN: this will add this to build cmake args
 #   -DGLAD_OUT_PATH:            build out path
@@ -352,7 +359,7 @@ endfunction()
 #   -DGLAD_REPRODUCIBLE:        Makes the build reproducible by not fetching the latest specification from Khronos.
 function(add_glad2)
     # params
-    cmake_parse_arguments(glad "git_shallow" "name;prefix;version;proxy;env_k;env_v" "deps" ${ARGN})
+    cmake_parse_arguments(glad "git_shallow" "name;prefix;version;proxy;python" "deps" ${ARGN})
     # 如果已经存在就直接退出
     if((TARGET "${glad_name}") OR (DEFINED "${glad_name}-includes"))
         return()
@@ -378,7 +385,7 @@ function(add_glad2)
     endif()
     if(glad_version_index GREATER_EQUAL 0)
         set(glad_url   "https://codeload.github.com/Dav1dde/glad/zip/refs/tags/v${glad_version}")
-        set(glad_file  "glad-${glad_version}.zip")
+        set(glad_file  "glad2-${glad_version}.zip")
         list(GET glad_hash_list ${glad_version_index} glad_hash)
     endif()
     # set build path
@@ -444,7 +451,7 @@ function(add_glad2)
     replace_cmake_args("glad_UNPARSED_ARGUMENTS" "glad_cmake_options")
     # patch
     set(glad_patch_file "${glad_path}/patch.cmake")
-    glad2_patch_script(script "${glad_patch_file}" source "${glad_source}" proxy "${glad_proxy}" env_k "${glad_env_k}" env_v "${glad_env_v}")
+    glad2_patch_script(script "${glad_patch_file}" source "${glad_source}" proxy "${glad_proxy}" python "${glad_python}")
     set(glad_patch_ooption COMMAND "${CMAKE_COMMAND}" -P "${glad_patch_file}")
     # set step
     get_cmake_args(arg "GLAD_HEADERONLY" default "OFF" result "glad_header_only" args_list_name "glad_UNPARSED_ARGUMENTS")

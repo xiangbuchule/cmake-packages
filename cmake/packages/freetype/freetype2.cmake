@@ -88,6 +88,60 @@ function(replace_cmake_args replace_list source_list)
     set("${source_list}" "${${source_list}}" PARENT_SCOPE)
 endfunction()
 
+# guess target file name
+function(guess_binary_file)
+    # params
+    cmake_parse_arguments(file "" "name;prefix;remove_prefix;suffix;remove_suffix" "" ${ARGN})
+    if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
+        if(MSVC)
+            set(lib_file_default_extension ".lib")
+            set(lib_file_default_prefix "")
+            set(lib_file_default_suffix "")
+            set(bin_file_default_extension ".dll")
+            set(bin_file_default_prefix "")
+            set(bin_file_default_suffix "")
+        elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set(lib_file_default_extension ".a")
+            set(lib_file_default_prefix "lib")
+            set(lib_file_default_suffix ".dll")
+            set(bin_file_default_extension ".dll")
+            set(bin_file_default_prefix "lib")
+            set(bin_file_default_suffix "")
+        elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+            message(FATAL_ERROR "TODO Setting ...")
+        else()
+            message(FATAL_ERROR "TODO Setting ...")
+        endif()
+    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
+        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set(lib_file_default_extension ".a")
+            set(lib_file_default_prefix "lib")
+            set(lib_file_default_suffix "")
+            set(bin_file_default_extension "so")
+            set(bin_file_default_prefix "lib")
+            set(bin_file_default_suffix "")
+        endif()
+    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
+        message(FATAL_ERROR "TODO Setting ...")
+    else()
+        message(FATAL_ERROR "TODO Setting ...")
+    endif()
+    set(lib_file_default_prefix "${file_prefix}")
+    set(lib_file_default_suffix "${file_suffix}")
+    set(bin_file_default_prefix "${file_prefix}")
+    set(bin_file_default_suffix "${file_suffix}")
+    if(file_remove_prefix)
+        set(lib_file_default_prefix "")
+        set(bin_file_default_prefix "")
+    endif()
+    if(file_remove_suffix)
+        set(lib_file_default_suffix "")
+        set(bin_file_default_suffix "")
+    endif()
+    set("${file_name}_lib" "${file_prefix}${file_name}${file_suffix}${lib_file_default_extension}" PARENT_SCOPE)
+    set("${file_name}_bin" "${file_prefix}${file_name}${file_suffix}${bin_file_default_extension}" PARENT_SCOPE)
+endfunction()
+
 # name: target name
 # prefix: prefix path
 # version: packages version
@@ -98,11 +152,11 @@ endfunction()
 #   GLFW_BUILD_DOCS:        ON
 #   GLFW_INSTALL:           ON
 #   GLFW_VULKAN_STATIC:     OFF
-function(add_freetype)
+function(add_freetype2)
     # params
     cmake_parse_arguments(freetype "" "name;prefix;version;proxy" "deps" ${ARGN})
     # if target exist, return
-    if(TARGET "${freetype_name}" OR (DEFINED "${freetype_name}_includes"))
+    if(TARGET "${freetype_name}" OR (DEFINED "${freetype_name}-includes"))
         return()
     endif()
     # set pkg name
@@ -113,6 +167,25 @@ function(add_freetype)
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "freetype_build_type" args_list_name "freetype_UNPARSED_ARGUMENTS")
     # address
     set(freetype_repository_url         "https://github.com/freetype/freetype")
+    list(APPEND freetype_version_list   "3.3.8" "3.3.9")
+    list(APPEND freetype_hash_list      "4D025083CC4A3DD1F91AB9B9BA4F5807193823E565A5BCF4BE202669D9911EA6"
+                                        "55261410F8C3A9CC47CE8303468A90F40A653CD8F25FB968B12440624FB26D08")
+    # input version is in version list
+    string(STRIP "${freetype_version}" freetype_version)
+    if("${freetype_version}" STREQUAL "")
+        set(freetype_version_index 0)
+    else()
+        list(FIND freetype_version_list "${freetype_version}" freetype_version_index)
+    endif()
+    if(freetype_version_index GREATER_EQUAL 0)
+        string(REPLACE "." ";" freetype_version_info "${freetype_version}")
+        list(GET freetype_version_info 0 freetype_version_major)
+        list(GET freetype_version_info 1 freetype_version_minor)
+        list(GET freetype_version_info 2 freetype_version_patch)
+        set(freetype_url   "${freetype_repository_url}/archive/refs/tags/VER-${freetype_version_major}-${freetype_version_minor}-${freetype_version_patch}.zip")
+        set(freetype_file  "freetype2-${freetype_version}.zip")
+        list(GET freetype_hash_list ${freetype_version_index} freetype_hash)
+    endif()
     # set build path
     set(freetype_download  "${freetype_prefix}/cache/download")
     set(freetype_install   "${freetype_prefix}/cache/install/${freetype_name}/${freetype_build_type}")
@@ -124,28 +197,28 @@ function(add_freetype)
         set(freetype_binary "${freetype_prefix}/cache/bin/${freetype_name}/${freetype_build_type}")
     endif()
     # build option
-    set(freetype_cmake_options  # default set shared/static
-                                "-DBUILD_SHARED_LIBS=${freetype_build_shared}"
-                                # default set debug/release
-                                "-DCMAKE_BUILD_TYPE=${freetype_build_type}"
-                                # default set lib/exe build path
-                                "-DLIBRARY_OUTPUT_PATH='${freetype_binary}'"
-                                "-DEXECUTABLE_OUTPUT_PATH='${freetype_binary}'"
-                                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY='${freetype_binary}'"
-                                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY='${freetype_binary}'"
-                                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY='${freetype_binary}'"
-                                # default set lib install path
-                                "-DCMAKE_INSTALL_PREFIX='${freetype_install}'"
-                                "-DCMAKE_INSTALL_LIBDIR='${freetype_install}/lib'"
-                                "-DCMAKE_INSTALL_BINDIR='${freetype_install}/bin'"
-                                "-DCMAKE_INSTALL_INCLUDEDIR='${freetype_install}/include'"
-                                # default set compile flags
-                                "-DCMAKE_C_FLAGS='${CMAKE_C_FLAGS}'"
-                                "-DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}'"
-                                "-DCMAKE_C_FLAGS_DEBUG='${CMAKE_C_FLAGS_DEBUG}'"
-                                "-DCMAKE_C_FLAGS_RELEASE='${CMAKE_C_FLAGS_RELEASE}'"
-                                "-DCMAKE_CXX_FLAGS_DEBUG='${CMAKE_CXX_FLAGS_DEBUG}'"
-                                "-DCMAKE_CXX_FLAGS_RELEASE='${CMAKE_CXX_FLAGS_RELEASE}'")
+    set(freetype_cmake_options # default set shared/static
+                            "-DBUILD_SHARED_LIBS=${freetype_build_shared}"
+                            # default set debug/release
+                            "-DCMAKE_BUILD_TYPE=${freetype_build_type}"
+                            # default set lib/exe build path
+                            "-DLIBRARY_OUTPUT_PATH='${freetype_binary}'"
+                            "-DEXECUTABLE_OUTPUT_PATH='${freetype_binary}'"
+                            "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY='${freetype_binary}'"
+                            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY='${freetype_binary}'"
+                            "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY='${freetype_binary}'"
+                            # default set lib install path
+                            "-DCMAKE_INSTALL_PREFIX='${freetype_install}'"
+                            "-DCMAKE_INSTALL_LIBDIR='${freetype_install}/lib'"
+                            "-DCMAKE_INSTALL_BINDIR='${freetype_install}/bin'"
+                            "-DCMAKE_INSTALL_INCLUDEDIR='${freetype_install}/include'"
+                            # default set compile flags
+                            "-DCMAKE_C_FLAGS='${CMAKE_C_FLAGS}'"
+                            "-DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}'"
+                            "-DCMAKE_C_FLAGS_DEBUG='${CMAKE_C_FLAGS_DEBUG}'"
+                            "-DCMAKE_C_FLAGS_RELEASE='${CMAKE_C_FLAGS_RELEASE}'"
+                            "-DCMAKE_CXX_FLAGS_DEBUG='${CMAKE_CXX_FLAGS_DEBUG}'"
+                            "-DCMAKE_CXX_FLAGS_RELEASE='${CMAKE_CXX_FLAGS_RELEASE}'")
     # add other build args
     replace_cmake_args("freetype_UNPARSED_ARGUMENTS" "freetype_cmake_options")
     # is install
@@ -153,11 +226,21 @@ function(add_freetype)
         set(freetype_build_cmd BUILD_COMMAND COMMAND "${CMAKE_COMMAND}" --build "${freetype_build}" --config "${freetype_build_type}")
         set(freetype_install_cmd INSTALL_COMMAND COMMAND "${CMAKE_COMMAND}" --build "${freetype_build}" --config "${freetype_build_type}" --target INSTALL)
     endif()
+    # set git config
+    if(NOT ("" STREQUAL "${freetype_proxy}"))
+        set(git_config GIT_CONFIG http.proxy="${freetype_proxy}" https.proxy="${freetype_proxy}")
+    endif()
+    # set url option
+    if(${freetype_version_index} GREATER_EQUAL 0)
+        set(freetype_url_option    URL "${freetype_url}" URL_HASH SHA256=${freetype_hash} DOWNLOAD_NAME "${freetype_file}")
+    else()
+        set(freetype_url_option GIT_REPOSITORY "${freetype_repository_url}" GIT_TAG "${freetype_version}"
+                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+    endif()
     # start build
-    ExternalProject_Add("${pkg_name}"   GIT_REPOSITORY "${freetype_repository_url}" GIT_TAG "${freetype_version}"
-                                        GIT_SHALLOW ON GIT_PROGRESS OFF DOWNLOAD_DIR "${freetype_download}"
-                                        SOURCE_DIR "${freetype_source}" ${freetype_url_option}
-                                        CMAKE_ARGS ${freetype_cmake_options} ${freetype_build_cmd} DEPENDS ${freetype_deps}
+    ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${freetype_download}" SOURCE_DIR "${freetype_source}"
+                                        ${freetype_url_option} CMAKE_ARGS ${freetype_cmake_options}
+                                        ${freetype_build_cmd} ${freetype_install_cmd} DEPENDS ${freetype_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
     # check is build shared/static
@@ -169,8 +252,8 @@ function(add_freetype)
     add_dependencies("${freetype_name}" "${pkg_name}")
     # check is build debug/release
     string(TOUPPER "${freetype_build_type}" freetype_build_type)
-    if(("${freetype_build_type}" STREQUAL "DEBUG"))
-        set("${freetype_name}_includes" "${freetype_source}/include" PARENT_SCOPE)
+    if("${freetype_build_type}" STREQUAL "DEBUG")
+        set("${freetype_name}-includes" "${freetype_source}/include" PARENT_SCOPE)
         if(MSVC)
             set(lib_path "${freetype_binary}/${freetype_build_type}")
             set(bin_path "${freetype_binary}/${freetype_build_type}")
@@ -178,36 +261,15 @@ function(add_freetype)
             set(lib_path "${freetype_binary}")
             set(bin_path "${freetype_binary}")
         endif()
+        guess_binary_file(name "freetype" suffix "d")
     else()
-        set("${freetype_name}_includes" "${freetype_install}/include" PARENT_SCOPE)
+        set("${freetype_name}-includes" "${freetype_install}/include" PARENT_SCOPE)
         set(lib_path "${freetype_install}/lib")
         set(bin_path "${freetype_install}/bin")
+        guess_binary_file(name "freetype")
     endif()
-    if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
-        if(MSVC)
-            if(freetype_build_shared)
-                set(lib_name "freetype.lib")
-            else()
-                set(lib_name "freetype.lib")
-            endif()
-            set(bin_name "freetype.dll")
-        endif()
-        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            if(freetype_build_shared)
-                set(lib_name "libfreetype.a")
-            else()
-                set(lib_name "libfreetype.a")
-            endif()
-            set(bin_name "libfreetype.dll")
-        endif()
-        if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-            message(FATAL_ERROR "#TODO Setting ...")
-        endif()
-    else()
-        message(FATAL_ERROR "#TODO Setting ...")
-    endif()
-    set_target_properties("${freetype_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${lib_name}")
+    set_target_properties("${freetype_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${freetype_lib}")
     if(freetype_build_shared)
-        set_target_properties("${freetype_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${bin_name}")
+        set_target_properties("${freetype_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${freetype_bin}")
     endif()
 endfunction()
