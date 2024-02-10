@@ -10,8 +10,12 @@ endif()
 
 # set extra source path
 set(extra_source_path "${CMAKE_CURRENT_BINARY_DIR}/extra")
+
 # set assets
 include("${CMAKE_CURRENT_SOURCE_DIR}/assets/assets.cmake")
+
+# config file
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in" "${extra_source_path}/config.h" @ONLY)
 
 # 查找源文件
 list(APPEND source_file "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")

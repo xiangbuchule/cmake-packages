@@ -1,8 +1,9 @@
 #include <iostream>
 #include <memory>
 
+#include "config.h"
+
 #include "glad/gl.h"
-#define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
 #include "imconfig.h"
@@ -11,7 +12,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include "rc.hpp"
