@@ -1,0 +1,4 @@
+// program version
+const char *version = "@version@";
+// program name
+const char *name = "@name@";
