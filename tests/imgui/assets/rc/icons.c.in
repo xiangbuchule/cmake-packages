@@ -1,4 +1,4 @@
-#include <rc.h>
+#include "rc.h"
 
 // 16x16
 const unsigned char RC_ICON_16x16_DATA[@16x16_icon_len@] = {@16x16_icon@};

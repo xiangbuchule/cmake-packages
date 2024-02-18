@@ -12,15 +12,16 @@ set(ENV{https_proxy}    "${socks5_proxy}")
 # python3
 include("${custom_module}/tools/python/python3.cmake")
 add_python3(
-    name        "python3-3.13.0a1"
-    prefix      "${third_path}"
-    url         "https://www.python.org/ftp/python/3.13.0/python-3.13.0a1-embed-amd64.zip"
-    file        "python3-3.13.0a1.zip"
-    proxy       "${socks5_proxy}"
-    sha256      "fb8733603b48722e6cdfcdee2b8b4d4f5c8f6723ef8a9478ab211d6469226df6"
-    pkgs        "jinja2"
-    pip_url     "https://bootstrap.pypa.io/get-pip.py"
-    pip_file    "get-pip.py"
+    name            "python3-3.13.0a1"
+    prefix          "${third_path}"
+    url             "https://www.python.org/ftp/python/3.13.0/python-3.13.0a1-embed-amd64.zip"
+    file            "python3-3.13.0a1.zip"
+    # proxy           "${socks5_proxy}"
+    sha256          "fb8733603b48722e6cdfcdee2b8b4d4f5c8f6723ef8a9478ab211d6469226df6"
+    pkgs            "jinja2"
+    pip_url         "https://bootstrap.pypa.io/get-pip.py"
+    pip_file        "get-pip.py"
+    pip_source_url  "https://pypi.tuna.tsinghua.edu.cn"
 )
 
 # glfw3
@@ -71,10 +72,10 @@ add_freetype2(
 # imgui
 include("${custom_module}/packages/imgui/imgui.cmake")
 add_imgui(
-    name    "imgui-1.90.1-docking"
-    version "v1.90.1-docking"
+    name    "imgui-1.90.3-docking"
+    version "1.90.3-docking"
     prefix  "${third_path}"
-    proxy   "${socks5_proxy}"
+    # proxy   "${socks5_proxy}"
     deps    "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
     freetype ON
 )

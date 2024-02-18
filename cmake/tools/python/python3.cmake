@@ -1,16 +1,19 @@
 # install python script
-# script:   script file save path
-# name:     python name
-# url:      python install url
-# file:     python install file name
-# proxy:    pip install use proxy
-# pkgs:     pip install packages
-# sha256:   python file sha256 check
-# download: python file save dir
-# binary:   python file extract and install dir
+# script:           script file save path
+# name:             python name
+# url:              python install url
+# file:             python install file name
+# proxy:            pip install use proxy
+# pkgs:             pip install packages
+# sha256:           python file sha256 check
+# download:         python file save dir
+# binary:           python file extract and install dir
+# pip_url:          pip url
+# pip_file:         pip file
+# pip_source_url:   pip source url
 function(python3_patch_script)
     # params
-    cmake_parse_arguments(python3 "" "script;name;url;file;sha256;download;binary;proxy;pip_url;pip_file" "pkgs" ${ARGN})
+    cmake_parse_arguments(python3 "" "script;name;url;file;sha256;download;binary;proxy;pip_url;pip_file;pip_source_url" "pkgs" ${ARGN})
     # set params
     set(script_content "\
 # set python info
@@ -24,6 +27,7 @@ set(python_download_path    \"${python3_download}\")
 set(python_binary_path      \"${python3_binary}/\${python_name}\")
 set(pip_url                 \"${python3_pip_url}\")
 set(pip_file                \"\${python_name}-${python3_pip_file}\")
+set(pip_source_url          \"${python3_pip_source_url}\")
 ")
     # set other script
     string(APPEND script_content [[
@@ -62,6 +66,22 @@ if(NOT EXISTS "${python_binary_path}/LICENSE.txt" OR IS_DIRECTORY "${python_bina
 endif()
 # install pip
 if(NOT EXISTS "${python_binary_path}/Lib/site-packages" OR NOT (IS_DIRECTORY "${python_binary_path}"))
+    # pip config file
+    if(NOT ("" STREQUAL "${pip_source_url}"))
+        if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
+            set(pip_config_file "${python_binary_path}/pip.ini")
+        else()
+            set(pip_config_file "${python_binary_path}/pip.conf")
+        endif()
+        string(APPEND pip_config_file_content "[global]\n")
+        string(APPEND pip_config_file_content "index-url = ${pip_source_url}/simple\n")
+        string(APPEND pip_config_file_content "[install]\n")
+        string(APPEND pip_config_file_content "trusted-host = ${pip_source_url}\n")
+        if(NOT EXISTS "${pip_config_file}" OR IS_DIRECTORY "${pip_config_file}")
+            file(WRITE "${pip_config_file}" "${pip_config_file_content}")
+        endif()
+    endif()
+    # start install pip
     execute_process(WORKING_DIRECTORY "${python_binary_path}" ERROR_VARIABLE python_install_pip_error
         COMMAND "${CMAKE_COMMAND}" -E chdir "${python_binary_path}" "${python_binary_path}/python" "${python_download_path}/${pip_file}" --no-warn-script-location
     )
@@ -134,16 +154,19 @@ function(pip_install_pkgs)
     endif()
 endfunction()
 
-# name:     target name
-# prefix:   prefix path
-# url:      download url
-# file:     download file name
-# sha256:   hash sha256 check
-# deps:     deps target
-# pkgs:     need python packages
+# name:             target name
+# prefix:           prefix path
+# url:              download url
+# file:             download file name
+# sha256:           hash sha256 check
+# deps:             deps target
+# pkgs:             need python packages
+# pip_url:          pip url
+# pip_file:         pip file
+# pip_source_url:   pip source url
 function(add_python3)
     # params
-    cmake_parse_arguments(python3   "" "name;prefix;url;file;sha256;proxy;pip_url;pip_file" "deps;pkgs" ${ARGN})
+    cmake_parse_arguments(python3   "" "name;prefix;url;file;sha256;proxy;pip_url;pip_file;pip_source_url" "deps;pkgs" ${ARGN})
     # if exists target, return
     set(target_name "tool-${python3_name}")
     if(TARGET "${target_name}")
@@ -159,17 +182,18 @@ function(add_python3)
     endif()
     set(python3_patch_script_file "${python3_patch}/patch.cmake")
     python3_patch_script(
-        script      "${python3_patch_script_file}"
-        name        "${python3_name}"
-        url         "${python3_url}"
-        file        "${python3_file}"
-        sha256      "${python3_sha256}"
-        download    "${python3_download}"
-        binary      "${python3_source}"
-        proxy       "${python3_proxy}"
-        pip_url     "${python3_pip_url}"
-        pip_file    "${python3_pip_file}"
-        pkgs        ${python3_pkgs}
+        script          "${python3_patch_script_file}"
+        name            "${python3_name}"
+        url             "${python3_url}"
+        file            "${python3_file}"
+        sha256          "${python3_sha256}"
+        download        "${python3_download}"
+        binary          "${python3_source}"
+        proxy           "${python3_proxy}"
+        pip_url         "${python3_pip_url}"
+        pip_file        "${python3_pip_file}"
+        pkgs            ${python3_pkgs}
+        pip_source_url  "${python3_pip_source_url}"
         ${python3_UNPARSED_ARGUMENTS}
     )
     set(python3_source "${python3_source}/${python3_name}")

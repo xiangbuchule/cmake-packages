@@ -11,12 +11,12 @@ endif()
 # set extra source path
 set(extra_source_path "${CMAKE_CURRENT_BINARY_DIR}/extra")
 # set assets
-include("${CMAKE_CURRENT_SOURCE_DIR}/assets.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/assets/assets.cmake")
 
 # 查找源文件
-file(GLOB_RECURSE COMMON_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/common/*.c")
-file(GLOB_RECURSE MAIN_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
-file(GLOB_RECURSE RC_SOURCE_FILE "${extra_source_path}/*.c")
+file(GLOB_RECURSE COMMON_SOURCE_FILE    "${CMAKE_CURRENT_SOURCE_DIR}/src/common/*.c")
+file(GLOB_RECURSE MAIN_SOURCE_FILE      "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+file(GLOB_RECURSE RC_SOURCE_FILE        "${extra_source_path}/*.c")
 
 # 构建目标
 add_executable(${PROJECT_NAME} ${RC_SOURCE_FILE} ${COMMON_SOURCE_FILE} ${MAIN_SOURCE_FILE})

@@ -395,12 +395,16 @@ function(add_glad2)
             set(glad_binary "${glad_prefix}/cache/bin/${glad_name}/${glad_build_type}")
         endif()
     endif()
+    # set git config
+    if(NOT ("" STREQUAL "${glad_proxy}"))
+        set(git_config GIT_CONFIG http.proxy=${glad_proxy} https.proxy=${glad_proxy})
+    endif()
     # set url
     if(${glad_version_index} GREATER_EQUAL 0)
         set(glad_url_options    URL "${glad_url}" URL_HASH SHA256=${glad_hash} DOWNLOAD_NAME "${glad_file}")
     else()
         set(glad_url_options    GIT_REPOSITORY "${repository_url}" GIT_TAG "${glad_version}"
-                                GIT_SHALLOW ${glad_shallow} GIT_PROGRESS OFF)
+                                GIT_SHALLOW ${glad_shallow} GIT_PROGRESS OFF ${git_config})
     endif()
     # build option
     set(glad_cmake_options  # default set shared/static
