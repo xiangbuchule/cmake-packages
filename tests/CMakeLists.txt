@@ -24,6 +24,52 @@ add_python3(
     pip_source_url  "https://pypi.tuna.tsinghua.edu.cn"
 )
 
+# zlib
+include("${custom_module}/packages/zlib/zlib.cmake")
+add_zlib(
+    name    "zlib-1.3.1"
+    version "1.3.1"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+    "-DZLIB_BUILD_EXAMPLES=OFF"
+)
+
+# bzip2
+include("${custom_module}/packages/bzip/bzip2.cmake")
+add_bzip2(
+    name    "bzip2-master"
+    version "master"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+    python  "${python3-3.13.0a1-path}"
+    deps    "tool-python3-3.13.0a1"
+)
+
+# libzip
+include("${custom_module}/packages/libzip/libzip.cmake")
+add_libzip(
+    name    "libzip-1.10.1"
+    version "1.10.1"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+    deps    "pkg-zlib-1.3.1" "pkg-bzip2-master"
+    zlib    "${zlib-1.3.1-root}"
+    bzip2   "${bzip2-master-root}"
+    "-DENABLE_BZIP2=ON"
+)
+
+# freetype2
+include("${custom_module}/packages/freetype/freetype2.cmake")
+add_freetype2(
+    name    "freetype2-2.13.2"
+    version "2.13.2"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+    deps    "pkg-zlib-1.3.1" "pkg-bzip2-master"
+    zlib    "${zlib-1.3.1-root}"
+    bzip2   "${bzip2-master-root}"
+)
+
 # glfw3
 include("${custom_module}/packages/glfw/glfw3.cmake")
 add_glfw3(
@@ -59,15 +105,6 @@ add_glad2(
 # stb_image
 include("${custom_module}/packages/stb/stb.cmake")
 add_stb(name "stb-master" version "master" prefix "${third_path}" proxy "${socks5_proxy}")
-
-# freetype2
-include("${custom_module}/packages/freetype/freetype2.cmake")
-add_freetype2(
-    name    "freetype2-2.13.2"
-    version "2.13.2"
-    prefix  "${third_path}"
-    proxy   "${socks5_proxy}"
-)
 
 # imgui
 include("${custom_module}/packages/imgui/imgui.cmake")

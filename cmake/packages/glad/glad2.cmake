@@ -387,7 +387,7 @@ function(add_glad2)
     set(glad_install    "${glad_prefix}/cache/install/${glad_name}/${glad_build_type}")
     set(glad_build      "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(glad_source     "${glad_prefix}/${glad_name}")
-    set(glad_path       "${glad_prefix}/cache/patch/${glad_name}")
+    set(glad_patch       "${glad_prefix}/cache/patch/${glad_name}")
     if("${glad_binary}" STREQUAL "")
         if(MSVC)
             set(glad_binary "${glad_prefix}/cache/bin/${glad_name}")
@@ -448,9 +448,9 @@ function(add_glad2)
     # add other build args
     replace_cmake_args("glad_UNPARSED_ARGUMENTS" "glad_cmake_options")
     # patch
-    set(glad_patch_file "${glad_path}/patch.cmake")
+    set(glad_patch_file "${glad_patch}/patch.cmake")
     glad2_patch_script(script "${glad_patch_file}" source "${glad_source}" proxy "${glad_proxy}" python "${glad_python}")
-    set(glad_patch_ooption COMMAND "${CMAKE_COMMAND}" -P "${glad_patch_file}")
+    set(glad_patch_option COMMAND "${CMAKE_COMMAND}" -P "${glad_patch_file}")
     # set step
     get_cmake_args(arg "GLAD_HEADERONLY" default "OFF" result "glad_header_only" args_list_name "glad_UNPARSED_ARGUMENTS")
     # msvc build command
@@ -463,7 +463,7 @@ function(add_glad2)
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${glad_download}" SOURCE_DIR "${glad_source}"
                                         ${glad_url_options} CMAKE_ARGS ${glad_cmake_options}
-                                        PATCH_COMMAND ${glad_patch_ooption} ${glad_build_cmd}
+                                        PATCH_COMMAND ${glad_patch_option} ${glad_build_cmd}
                                         ${glad_install_cmd} ${glad_terminal_options}
                                         DEPENDS ${glad_deps})
     # set target

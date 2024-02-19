@@ -1,8 +1,0 @@
-#include "rc.h"
-
-// 16x16
-const unsigned char RC_ICON_16x16_DATA[@16x16_icon_len@] = {@16x16_icon@};
-// 32x32
-const unsigned char RC_ICON_32x32_DATA[@32x32_icon_len@] = {@32x32_icon@};
-// 48x48
-const unsigned char RC_ICON_48x48_DATA[@48x48_icon_len@] = {@48x48_icon@};

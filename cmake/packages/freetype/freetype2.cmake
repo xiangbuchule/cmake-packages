@@ -1,5 +1,39 @@
 include(ExternalProject)
 
+# install freetype2 script
+# script:   script file save path
+# source:   source code path
+# zlib:     zlib path dir
+# bzip2:    bzip2 path dir
+function(freetype2_patch_script)
+    # params
+    cmake_parse_arguments(freetype "" "script;source;zlib;bzip2" "" ${ARGN})
+    # set params
+    set(script_content "\
+# set info
+set(source  \"${freetype_source}\")
+set(zlib    \"${freetype_zlib}\")
+set(bzip2   \"${freetype_bzip2}\")
+")
+    string(APPEND script_content [[
+# write CMakeLists.txt content
+set(regex_string "project(freetype C)")
+file(READ "${source}/CMakeLists.txt" old_content)
+string(APPEND replace_content "${regex_string}\n")
+if(NOT ("" STREQUAL "${zlib}"))
+    string(APPEND replace_content "set(ZLIB_ROOT \"${zlib}\")\n")
+endif()
+if(NOT ("" STREQUAL "${bzip2}"))
+    string(APPEND replace_content "set(ENV{PATH} \"${bzip2};\$ENV{PATH}\")\n")
+endif()
+string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
+file(WRITE "${source}/CMakeLists.txt" "${new_content}")
+]])
+    if(NOT EXISTS "${freetype_script}" OR IS_DIRECTORY "${freetype_script}")
+        file(WRITE "${freetype_script}" "${script_content}")
+    endif()
+endfunction()
+
 # check and get cmake args params
 # parameter:    check cmake parameter
 # default:      default value
@@ -142,10 +176,12 @@ function(guess_binary_file)
     set("${file_name}_bin" "${file_prefix}${file_name}${file_suffix}${bin_file_default_extension}" PARENT_SCOPE)
 endfunction()
 
-# name: target name
-# prefix: prefix path
-# version: packages version
-# deps: deps target
+# name:     target name
+# prefix:   prefix path
+# version:  packages version
+# deps:     deps target
+# zlib:     zlib path dir
+# bzip2:    bzip2 path dir
 # ARGN: this will add this to build cmake args
 #   FT_DISABLE_ZLIB:            OFF
 #   FT_DISABLE_BZIP2:           OFF
@@ -155,7 +191,7 @@ endfunction()
 #   FT_ENABLE_ERROR_STRINGS:    OFF
 function(add_freetype2)
     # params
-    cmake_parse_arguments(freetype "" "name;prefix;version;proxy" "deps" ${ARGN})
+    cmake_parse_arguments(freetype "" "name;prefix;version;proxy;zlib;bzip2" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${freetype_name}" OR (DEFINED "${freetype_name}-includes"))
         return()
@@ -192,6 +228,7 @@ function(add_freetype2)
     set(freetype_install   "${freetype_prefix}/cache/install/${freetype_name}/${freetype_build_type}")
     set(freetype_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(freetype_source    "${freetype_prefix}/${freetype_name}")
+    set(freetype_patch      "${freetype_prefix}/cache/patch/${freetype_name}")
     if(MSVC)
         set(freetype_binary "${freetype_prefix}/cache/bin/${freetype_name}")
     else()
@@ -238,10 +275,14 @@ function(add_freetype2)
         set(freetype_url_option GIT_REPOSITORY "${freetype_repository_url}" GIT_TAG "${freetype_version}"
                                 GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
     endif()
+    # patch
+    set(freetype_patch_file "${freetype_patch}/patch.cmake")
+    freetype2_patch_script(script "${freetype_patch_file}" source "${freetype_source}" zlib "${freetype_zlib}" bzip2 "${freetype_bzip2}")
+    set(freetype_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${freetype_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${freetype_download}" SOURCE_DIR "${freetype_source}"
                                         ${freetype_url_option} CMAKE_ARGS ${freetype_cmake_options}
-                                        ${freetype_build_cmd} ${freetype_install_cmd} DEPENDS ${freetype_deps}
+                                        ${freetype_patch_cmd} ${freetype_build_cmd} ${freetype_install_cmd} DEPENDS ${freetype_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
     # check is build shared/static

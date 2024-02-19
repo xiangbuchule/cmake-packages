@@ -1,6 +1,0 @@
-#include "rc.h"
-
-// vert sharder
-const unsigned char RC_SHADER_VERT_SOURCE[@main_vert_len@] = {@main_vert@};
-// frag shader
-const unsigned char RC_SHADER_FRAG_SOURCE[@main_frag_len@] = {@main_frag@};
