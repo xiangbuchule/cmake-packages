@@ -183,11 +183,11 @@ function(add_glfw3)
         set(glfw3_url_option    URL "${glfw3_url}" URL_HASH SHA256=${glfw3_hash} DOWNLOAD_NAME "${glfw3_file}")
     else()
         set(glfw3_url_option    GIT_REPOSITORY "${glfw3_repository_url}" GIT_TAG "${glfw3_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${glfw3_download}" SOURCE_DIR "${glfw3_source}"
-                                        ${glfw3_url_option} CMAKE_ARGS ${glfw3_cmake_options}
+                                        ${glfw3_url_option} CMAKE_ARGS ${glfw3_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${glfw3_build_cmd} ${glfw3_install_cmd} DEPENDS ${glfw3_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)

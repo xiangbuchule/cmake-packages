@@ -21,10 +21,10 @@ function(add_stb)
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   GIT_REPOSITORY "https://github.com/nothings/stb" GIT_TAG "${stb_version}"
-                                        ${git_config} GIT_SHALLOW ON GIT_PROGRESS OFF SOURCE_DIR "${stb_source}"
-                                        PATCH_COMMAND "" CONFIGURE_COMMAND "" BUILD_COMMAND "" INSTALL_COMMAND ""
-                                        USES_TERMINAL_DOWNLOAD ON USES_TERMINAL_UPDATE ON
-                                        DEPENDS ${stb_deps} ${stb_UNPARSED_ARGUMENTS})
+                                        ${git_config} GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON
+                                        SOURCE_DIR "${stb_source}" PATCH_COMMAND "" CONFIGURE_COMMAND ""
+                                        BUILD_COMMAND "" INSTALL_COMMAND "" EXCLUDE_FROM_ALL ON USES_TERMINAL_DOWNLOAD ON
+                                        USES_TERMINAL_UPDATE ON DEPENDS ${stb_deps} ${stb_UNPARSED_ARGUMENTS})
     # set library
     add_library("${stb_name}" INTERFACE)
     target_include_directories("${stb_name}" INTERFACE "${stb_source}")

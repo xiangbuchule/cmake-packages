@@ -294,7 +294,7 @@ function(add_libzip)
         set(libzip_url_option URL "${libzip_url}" URL_HASH SHA256=${libzip_hash} DOWNLOAD_NAME "${libzip_file}")
     else()
         set(libzip_url_option   GIT_REPOSITORY "${libzip_repository_url}" GIT_TAG "${libzip_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # patch
     set(libzip_patch_file "${libzip_patch}/patch.cmake")
@@ -302,7 +302,7 @@ function(add_libzip)
     set(libzip_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${libzip_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${libzip_download}" SOURCE_DIR "${libzip_source}"
-                                        ${libzip_url_option} CMAKE_ARGS ${libzip_cmake_options}
+                                        ${libzip_url_option} CMAKE_ARGS ${libzip_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${libzip_patch_cmd} ${libzip_build_cmd} ${libzip_install_cmd} DEPENDS ${libzip_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)

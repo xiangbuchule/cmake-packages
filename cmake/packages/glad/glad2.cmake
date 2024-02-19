@@ -353,7 +353,7 @@ endfunction()
 #   -DGLAD_REPRODUCIBLE:        Makes the build reproducible by not fetching the latest specification from Khronos.
 function(add_glad2)
     # params
-    cmake_parse_arguments(glad "git_shallow" "name;prefix;version;proxy;python" "deps" ${ARGN})
+    cmake_parse_arguments(glad "" "name;prefix;version;proxy;python" "deps" ${ARGN})
     # 如果已经存在就直接退出
     if((TARGET "${glad_name}") OR (DEFINED "${glad_name}-includes"))
         return()
@@ -404,7 +404,7 @@ function(add_glad2)
         set(glad_url_options    URL "${glad_url}" URL_HASH SHA256=${glad_hash} DOWNLOAD_NAME "${glad_file}")
     else()
         set(glad_url_options    GIT_REPOSITORY "${repository_url}" GIT_TAG "${glad_version}"
-                                GIT_SHALLOW ${glad_shallow} GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # build option
     set(glad_cmake_options  # default set shared/static
@@ -462,7 +462,7 @@ function(add_glad2)
                                 USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${glad_download}" SOURCE_DIR "${glad_source}"
-                                        ${glad_url_options} CMAKE_ARGS ${glad_cmake_options}
+                                        ${glad_url_options} CMAKE_ARGS ${glad_cmake_options} EXCLUDE_FROM_ALL ON
                                         PATCH_COMMAND ${glad_patch_option} ${glad_build_cmd}
                                         ${glad_install_cmd} ${glad_terminal_options}
                                         DEPENDS ${glad_deps})

@@ -31,18 +31,20 @@ imgui_patch_script(
 configure_file("${include_paths}/config.h.in" "${extra_source_path}/config.h" @ONLY)
 
 # 查找源文件
-list(APPEND source_file         "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
+list(APPEND source_file "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
 # 构建目标
 add_executable(${PROJECT_NAME} ${source_file})
 # 目标依赖项
-add_custom_command(
-    TARGET ${PROJECT_NAME} PRE_BUILD
+add_custom_target(
+    ${PROJECT_NAME}-rc
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/patch.cmake"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+    USES_TERMINAL
 )
 add_dependencies(
-    ${PROJECT_NAME} libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
+    ${PROJECT_NAME} ${PROJECT_NAME}-rc
+                    libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
                     freetype2-2.13.2 imgui-1.90.3-docking
                     bzip2-master
 )
@@ -74,12 +76,12 @@ target_link_libraries(
                     freetype2-2.13.2 imgui-1.90.3-docking
 )
 if(MSVC)
-    set(new_link_flags "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-    get_target_property(old_link_flags ${PROJECT_NAME} LINK_FLAGS)
-    if(NOT "${old_link_flags}" STREQUAL "old_link_flags-NOTFOUND")
-        set(new_link_flags "${old_link_flags} ${new_link_flags}")
-    endif()
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${new_link_flags}")
+    # set(new_link_flags "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+    # get_target_property(old_link_flags ${PROJECT_NAME} LINK_FLAGS)
+    # if(NOT "${old_link_flags}" STREQUAL "old_link_flags-NOTFOUND")
+    #     set(new_link_flags "${old_link_flags} ${new_link_flags}")
+    # endif()
+    # set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${new_link_flags}")
 endif()
 # 构建后复制文件
 if(WIN32)

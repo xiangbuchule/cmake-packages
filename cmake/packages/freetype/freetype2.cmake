@@ -273,7 +273,7 @@ function(add_freetype2)
         set(freetype_url_option    URL "${freetype_url}" URL_HASH SHA256=${freetype_hash} DOWNLOAD_NAME "${freetype_file}")
     else()
         set(freetype_url_option GIT_REPOSITORY "${freetype_repository_url}" GIT_TAG "${freetype_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # patch
     set(freetype_patch_file "${freetype_patch}/patch.cmake")
@@ -281,7 +281,7 @@ function(add_freetype2)
     set(freetype_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${freetype_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${freetype_download}" SOURCE_DIR "${freetype_source}"
-                                        ${freetype_url_option} CMAKE_ARGS ${freetype_cmake_options}
+                                        ${freetype_url_option} CMAKE_ARGS ${freetype_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${freetype_patch_cmd} ${freetype_build_cmd} ${freetype_install_cmd} DEPENDS ${freetype_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)

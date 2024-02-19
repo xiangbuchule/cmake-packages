@@ -44,12 +44,12 @@ function(add_imgui)
         set(imgui_url_option    URL "${imgui_url}" URL_HASH SHA256=${imgui_hash} DOWNLOAD_NAME "${imgui_file}")
     else()
         set(imgui_url_option    GIT_REPOSITORY "${imgui_repository_url}" GIT_TAG "${imgui_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${imgui_download}" SOURCE_DIR "${imgui_source}" ${imgui_url_option}
                                         PATCH_COMMAND "" CONFIGURE_COMMAND "" BUILD_COMMAND "" INSTALL_COMMAND ""
-                                        USES_TERMINAL_DOWNLOAD ON USES_TERMINAL_UPDATE ON
+                                        EXCLUDE_FROM_ALL ON USES_TERMINAL_DOWNLOAD ON USES_TERMINAL_UPDATE ON
                                         DEPENDS ${imgui_deps} ${imgui_UNPARSED_ARGUMENTS})
     # set source/include
     set(includes_paths  "${imgui_source}" "${imgui_source}/backends")

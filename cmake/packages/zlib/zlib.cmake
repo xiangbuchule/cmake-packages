@@ -228,11 +228,11 @@ function(add_zlib)
         set(zlib_url_option URL "${zlib_url}" URL_HASH SHA256=${zlib_hash} DOWNLOAD_NAME "${zlib_file}")
     else()
         set(zlib_url_option GIT_REPOSITORY "${zlib_repository_url}" GIT_TAG "${zlib_version}"
-                            GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                            GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${zlib_download}" SOURCE_DIR "${zlib_source}"
-                                        ${zlib_url_option} CMAKE_ARGS ${zlib_cmake_options}
+                                        ${zlib_url_option} CMAKE_ARGS ${zlib_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${zlib_build_cmd} ${zlib_install_cmd} DEPENDS ${zlib_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)

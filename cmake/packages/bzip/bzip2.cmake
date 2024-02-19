@@ -260,7 +260,7 @@ function(add_bzip2)
         set(bzip2_url_option URL "${bzip2_url}" URL_HASH SHA256=${bzip2_hash} DOWNLOAD_NAME "${bzip2_file}")
     else()
         set(bzip2_url_option    GIT_REPOSITORY "${bzip2_repository_url}" GIT_TAG "${bzip2_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF ${git_config})
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # patch
     set(bzip2_patch_file "${bzip2_patch}/patch.cmake")
@@ -268,7 +268,7 @@ function(add_bzip2)
     set(bzip2_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${bzip2_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${bzip2_download}" SOURCE_DIR "${bzip2_source}"
-                                        ${bzip2_url_option} CMAKE_ARGS ${bzip2_cmake_options}
+                                        ${bzip2_url_option} CMAKE_ARGS ${bzip2_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${bzip2_patch_cmd} ${bzip2_build_cmd} ${bzip2_install_cmd} DEPENDS ${bzip2_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
