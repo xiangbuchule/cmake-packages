@@ -1,0 +1,4 @@
+#include "rc.h"
+
+// rc data
+const char RC_DATA[@rc_data_len@] = {@rc_data@};

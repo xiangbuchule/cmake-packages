@@ -11,6 +11,10 @@ endif()
 
 # set includes
 set(include_paths "${CMAKE_CURRENT_SOURCE_DIR}/include")
+# set includes
+set(source_paths "${CMAKE_CURRENT_SOURCE_DIR}/src")
+# set config
+set(config_paths "${CMAKE_CURRENT_SOURCE_DIR}/config")
 # set extra source path
 set(extra_source_path "${CMAKE_CURRENT_BINARY_DIR}/extra")
 
@@ -20,18 +24,23 @@ imgui_patch_script(
     script              "${CMAKE_CURRENT_BINARY_DIR}/patch.cmake"
     target              "${CMAKE_CURRENT_BINARY_DIR}/rc.zip"
     config_key          "rc_data"
-    config_file         "${include_paths}/rc.h.in"
-    config_target_file  "${extra_source_path}/rc.h"
-    sources             "icons" "shaders"
+    config_files        "${config_paths}/rc.h.in"   "${config_paths}/rc.c.in"
+    config_target_files "${extra_source_path}/rc.h" "${extra_source_path}/rc.c"
+    sources             "icons/16x16_icon.png"      "icons/16x16_icon.png"
+                        "icons/32x32_icon.png"      "icons/48x48_icon.png"
+                        "icons/64x64_icon.png"      "icons/128x128_icon.png"
+                        "icons/256x256_icon.png"    "icons/512x512_icon.png"
+                        "shaders/main.vert"         "shaders/main.frag"
                         "fonts/Nerd-Font-Hack/HackNerdFont-Regular.ttf"
                         "fonts/Source-Han-Serif/SimplifiedChinese-VF.ttf"
 )
 
 # config file
-configure_file("${include_paths}/config.h.in" "${extra_source_path}/config.h" @ONLY)
+configure_file("${config_paths}/config.h.in" "${extra_source_path}/config.h" @ONLY)
 
 # 查找源文件
-list(APPEND source_file "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
+list(APPEND source_file "${source_paths}/main.cpp"
+                        "${extra_source_path}/rc.c")
 
 # 构建目标
 add_executable(${PROJECT_NAME} ${source_file})
@@ -45,7 +54,7 @@ add_custom_target(
 add_dependencies(
     ${PROJECT_NAME} ${PROJECT_NAME}-rc
                     libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
-                    freetype2-2.13.2 imgui-1.90.3-docking
+                    freetype2-2.13.2 imgui-1.90.3-docking-glfw-opengl3
                     bzip2-master
 )
 # 目标include
@@ -61,20 +70,26 @@ target_include_directories(
     "${freetype2-2.13.2-includes}"
     "${libzip-1.10.1-includes}"
 )
-# 声明一下imgui-1.90.3-docking中的源文件是被生成的
+# 声明一下imgui-1.90.3-docking-glfw-opengl3中的源文件是被生成的
 # 防止generate阶段报错找不到源文件
 add_custom_command(
-    OUTPUT ${imgui-1.90.3-docking-sources}
+    OUTPUT ${imgui-1.90.3-docking-glfw-opengl3-sources}
     COMMAND echo imgui source files will be created
     USES_TERMINAL ON
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.3-docking-sources}
+    # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.3-docking-glfw-opengl3-sources}
 )
 # 目标链接项
 target_link_libraries(
     ${PROJECT_NAME} libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
-                    freetype2-2.13.2 imgui-1.90.3-docking
+                    freetype2-2.13.2 imgui-1.90.3-docking-glfw-opengl3
 )
+# 由于glad构建为了动态库,需要添加GLAD_API_CALL_EXPORT
+# 保证能正确找到动态库的函数地址,当然也可以在.h文件中添加
+# #define GLAD_API_CALL_EXPORT
+if(MSVC AND glad2-2.0.4-shared)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GLAD_API_CALL_EXPORT)
+endif()
 if(MSVC)
     # set(new_link_flags "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
     # get_target_property(old_link_flags ${PROJECT_NAME} LINK_FLAGS)

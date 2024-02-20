@@ -109,12 +109,13 @@ add_stb(name "stb-master" version "master" prefix "${third_path}" proxy "${socks
 # imgui
 include("${custom_module}/packages/imgui/imgui.cmake")
 add_imgui(
-    name    "imgui-1.90.3-docking"
-    version "1.90.3-docking"
-    prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
-    deps    "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
-    freetype ON
+    name        "imgui-1.90.3-docking-glfw-opengl3"
+    version     "1.90.3-docking"
+    prefix      "${third_path}"
+    # proxy       "${socks5_proxy}"
+    deps        "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
+    freetype    ON
+    backends    "glfw" "opengl3"
 )
 
 # ==================================================

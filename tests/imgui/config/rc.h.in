@@ -2,6 +2,6 @@
 #define __RC_DATA__
 
 // rc data
-extern const char RC_DATA[@rc_data_len@] = {@rc_data@};
+extern const char RC_DATA[@rc_data_len@];
 
 #endif
