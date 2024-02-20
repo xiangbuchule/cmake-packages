@@ -24,6 +24,15 @@ add_python3(
     pip_source_url  "https://pypi.tuna.tsinghua.edu.cn"
 )
 
+# boost
+include("${custom_module}/packages/boost/boost.cmake")
+add_boost(
+    name        "boost-1.84.0"
+    version     "1.84.0"
+    prefix      "${third_path}"
+    # proxy       "${socks5_proxy}"
+)
+
 # zlib
 include("${custom_module}/packages/zlib/zlib.cmake")
 add_zlib(
@@ -76,8 +85,8 @@ add_glfw3(
     name    "glfw3-3.3.9"
     prefix  "${third_path}"
     version "3.3.9"
-    "-DBUILD_SHARED_LIBS=ON"    "-DCMAKE_BUILD_TYPE=Release"    "-DGLFW_BUILD_EXAMPLES=OFF"
-    "-DGLFW_BUILD_TESTS=OFF"    "-DGLFW_BUILD_DOCS=OFF"         "-DGLFW_INSTALL=ON"
+    "-DBUILD_SHARED_LIBS=ON"    "-DGLFW_BUILD_EXAMPLES=OFF"     "-DGLFW_INSTALL=ON"
+    "-DGLFW_BUILD_TESTS=OFF"    "-DGLFW_BUILD_DOCS=OFF"
 )
 
 # glad2
@@ -116,6 +125,26 @@ add_imgui(
     deps        "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
     freetype    ON
     backends    "glfw" "opengl3"
+)
+
+# mysql-connecter-c
+include("${custom_module}/packages/mysql/mysql8.cmake")
+add_mysql8(
+    name        "mysql8-8.3.0"
+    version     "8.3.0"
+    prefix      "${third_path}"
+    # proxy       "${socks5_proxy}"
+    # deps        "boost-1.84.0"
+    # boost       "${boost-1.84.0-includes}"
+)
+
+# mysql-connecter-c
+include("${custom_module}/packages/mysql/mysql-connector-c.cmake")
+add_mysql_connector_c(
+    name        "mysql-connector-c-6.1.11"
+    version     "6.1.11"
+    prefix      "${third_path}"
+    # proxy       "${socks5_proxy}"
 )
 
 # ==================================================

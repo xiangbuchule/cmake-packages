@@ -50,6 +50,7 @@ add_custom_target(
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/patch.cmake"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets"
     USES_TERMINAL
+    BYPRODUCTS "${extra_source_path}/rc.c"
 )
 add_dependencies(
     ${PROJECT_NAME} ${PROJECT_NAME}-rc
@@ -70,11 +71,11 @@ target_include_directories(
     "${freetype2-2.13.2-includes}"
     "${libzip-1.10.1-includes}"
 )
-# 声明一下imgui-1.90.3-docking-glfw-opengl3中的源文件是被生成的
+# 声明一下源文件是被生成的
 # 防止generate阶段报错找不到源文件
 add_custom_command(
-    OUTPUT ${imgui-1.90.3-docking-glfw-opengl3-sources}
-    COMMAND echo imgui source files will be created
+    OUTPUT  ${imgui-1.90.3-docking-glfw-opengl3-sources}
+    COMMAND echo some source files will be created
     USES_TERMINAL ON
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.3-docking-glfw-opengl3-sources}
