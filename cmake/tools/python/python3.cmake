@@ -20,7 +20,7 @@ function(python3_patch_script)
 set(python_url              \"${python3_url}\")
 set(python_name             \"${python3_name}\")
 set(python_file             \"${python3_file}\")
-set(python_pkgs             \"${python3_pkgs}\" \"${python3_UNPARSED_ARGUMENTS}\")
+set(python_pkgs             \"${python3_pkgs};${python3_UNPARSED_ARGUMENTS}\")
 set(python_proxy            \"${python3_proxy}\")
 set(python_sha256           \"${python3_sha256}\")
 set(python_download_path    \"${python3_download}\")
@@ -28,9 +28,11 @@ set(python_binary_path      \"${python3_binary}/\${python_name}\")
 set(pip_url                 \"${python3_pip_url}\")
 set(pip_file                \"\${python_name}-${python3_pip_file}\")
 set(pip_source_url          \"${python3_pip_source_url}\")
+string(REGEX REPLACE        \"(^;)|(;$)\" \"\" python_pkgs \"\${python_pkgs}\")
 ")
     # set other script
     string(APPEND script_content [[
+
 # create dir
 if(NOT EXISTS "${python_download_path}" OR IS_DIRECTORY "${python_download_path}")
     file(MAKE_DIRECTORY "${python_download_path}")
@@ -112,9 +114,7 @@ if(NOT ("${python_pkgs}" STREQUAL ";"))
     endif()
 endif()
 ]])
-    if(NOT EXISTS "${python3_script}" OR IS_DIRECTORY "${python3_script}")
-        file(WRITE "${python3_script}" "${script_content}")
-    endif()
+    file(WRITE "${python3_script}" "${script_content}")
 endfunction()
 
 # pip install packages

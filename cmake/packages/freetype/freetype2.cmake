@@ -29,9 +29,7 @@ endif()
 string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
 file(WRITE "${source}/CMakeLists.txt" "${new_content}")
 ]])
-    if(NOT EXISTS "${freetype_script}" OR IS_DIRECTORY "${freetype_script}")
-        file(WRITE "${freetype_script}" "${script_content}")
-    endif()
+    file(WRITE "${freetype_script}" "${script_content}")
 endfunction()
 
 # check and get cmake args params

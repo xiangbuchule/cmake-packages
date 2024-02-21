@@ -16,7 +16,7 @@ set(python  \"${bzip2_python}\")
     string(APPEND script_content [[
 # write CMakeLists.txt content
 set(regex_string "include_directories(\${PROJECT_BINARY_DIR})")
-string(APPEND replace_content "${regex_string}\n"
+string(APPEND replace_content "${regex_string}\n")
 file(READ "${source}/CMakeLists.txt" old_content)
 if(NOT ("" STREQUAL "${python}"))
     string(APPEND replace_content "set(ENV{PATH} \"${python};\$ENV{PATH}\")")
@@ -24,9 +24,7 @@ endif()
 string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
 file(WRITE "${source}/CMakeLists.txt" "${new_content}")
 ]])
-    if(NOT EXISTS "${bzip2_script}" OR IS_DIRECTORY "${bzip2_script}")
-        file(WRITE "${bzip2_script}" "${script_content}")
-    endif()
+    file(WRITE "${bzip2_script}" "${script_content}")
 endfunction()
 
 # check and get cmake args params

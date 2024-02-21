@@ -9,6 +9,17 @@ set(socks5_proxy        "socks5://127.0.0.1:10808")
 set(ENV{http_proxy}     "${socks5_proxy}")
 set(ENV{https_proxy}    "${socks5_proxy}")
 
+# nasm
+include("${custom_module}/tools/nasm/nasm.cmake")
+add_nasm(
+    name    "nasm-2.16.01"
+    prefix  "${third_path}"
+    url     "https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/win64/nasm-2.16.01-win64.zip"
+    file    "nasm-2.16.01.zip"
+    # proxy   "${socks5_proxy}"
+    sha256  "029EED31FAF0D2C5F95783294432CBEA6C15BF633430F254BB3C1F195C67CA3A"
+)
+
 # python3
 include("${custom_module}/tools/python/python3.cmake")
 add_python3(
@@ -22,6 +33,30 @@ add_python3(
     pip_url         "https://bootstrap.pypa.io/get-pip.py"
     pip_file        "get-pip.py"
     pip_source_url  "https://pypi.tuna.tsinghua.edu.cn"
+)
+
+# perl
+include("${custom_module}/tools/perl/perl.cmake")
+add_perl(
+    name    "perl-5.38.0.1"
+    prefix  "${third_path}"
+    url     "https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_5380_5361/strawberry-perl-5.38.0.1-64bit-portable.zip"
+    file    "perl-5.38.0.1.zip"
+    # proxy   "${socks5_proxy}"
+    sha256  "CA6402A466939D5D658CC0D09A20DC59635AE68F6903A92A747A802539E40908"
+    # pkgs    "jinja2"
+)
+
+# openssl3
+include("${custom_module}/packages/openssl/openssl3.cmake")
+add_openssl3(
+    name    "openssl3-3.2.1"
+    prefix  "${third_path}"
+    version "3.2.1"
+    nasm    "${nasm-2.16.01-path}"
+    perl    "${perl-5.38.0.1-path}"
+    # proxy           "${socks5_proxy}"
+    deps    "tool-nasm-2.16.01" "tool-perl-5.38.0.1"
 )
 
 # boost

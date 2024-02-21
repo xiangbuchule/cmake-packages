@@ -29,9 +29,7 @@ endif()
 string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
 file(WRITE "${source}/CMakeLists.txt" "${new_content}")
 ]])
-    if(NOT EXISTS "${libzip_script}" OR IS_DIRECTORY "${libzip_script}")
-        file(WRITE "${libzip_script}" "${script_content}")
-    endif()
+    file(WRITE "${libzip_script}" "${script_content}")
 endfunction()
 
 # check and get cmake args params

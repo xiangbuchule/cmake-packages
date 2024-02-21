@@ -182,9 +182,7 @@ string(REGEX REPLACE "${ssl_replace_key}" "${ssl_replace_content}" python_config
 file(WRITE "${python_config_file}" "${python_config}")
 ]])
     set(script_content "${script_content}\n\n${cmake_build_content}")
-    if(NOT EXISTS "${glad2_script}" OR IS_DIRECTORY "${glad2_script}")
-        file(WRITE "${glad2_script}" "${script_content}")
-    endif()
+    file(WRITE "${glad2_script}" "${script_content}")
 endfunction()
 
 # check and get cmake args params
