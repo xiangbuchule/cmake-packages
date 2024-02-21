@@ -172,54 +172,47 @@ endfunction()
 # replace:  replace contents
 # remove:   remove not regex item
 # option:   operate option (replace,remove,replace_regex,replace_not_regex)
-#   REMOVE:             remove this item all content
-#   REMOVE_REGEX:       remove this item regex content
-#   REMOVE_NOT_REGEX:   remove this item not regex content
+#   FIND:               find regex item
+#   FIND_NOT_REGEX:     find not regex item
 #   REPLACE:            replace this item all content
 #   REPLACE_REGEX:      just replace this item regex content
 #   REPLACE_NOT_REGEX:  just replace this item not regex content
 function(replace_list)
     # params
     cmake_parse_arguments(list "" "option;regex;replace;remove" "names" ${ARGN})
-    set(default_option_list "REMOVE" "REMOVE_REGEX" "REMOVE_NOT_REGEX"
+    set(default_option_list "FIND" "FIND_NOT_REGEX"
                             "REPLACE" "REPLACE_REGEX" "REPLACE_NOT_REGEX")
     # get option
     string(STRIP "${list_option}" list_option)
     string(TOUPPER "${list_option}" list_option)
     if("" STREQUAL "${list_option}")
-        set(list_option "REMOVE")
+        set(list_option "FIND")
     else()
         list(FIND default_option_list "${list_option}" option_index)
         if(${option_index} LESS 0)
-            set(list_option "REMOVE")
+            set(list_option "FIND")
         endif()
     endif()
-    # set replace
-    set(remove_option_list "REMOVE" "REMOVE_REGEX")
-    list(FIND remove_option_list "${list_option}" option_index)
-    if(${option_index} GREATER_EQUAL 0)
-        set(list_replace "")
+    if("FIND_NOT_REGEX" STREQUAL "${list_option}")
+        set(list_remove OFF)
     endif()
     # foreach
     foreach(list_name IN LISTS list_names list_UNPARSED_ARGUMENTS)
         foreach(item IN LISTS "${list_name}")
             # is match
             string(REGEX MATCHALL "${list_regex}" match_result "${item}")
-            if(match_result AND "REMOVE" STREQUAL "${list_option}")
+            if((match_result AND ("FIND_NOT_REGEX" STREQUAL "${list_option}")) OR
+                (NOT match_result AND ("FIND" STREQUAL "${list_option}" OR list_remove)))
                 continue()
             endif()
             if(match_result AND "REPLACE" STREQUAL "${list_option}")
                 set(item "${list_replace}")
             endif()
-            if(match_result AND "REMOVE_REGEX" STREQUAL "${list_option}" OR "REPLACE_REGEX" STREQUAL "${list_option}")
+            if(match_result AND "REPLACE_REGEX" STREQUAL "${list_option}")
                 string(REGEX REPLACE "${list_regex}" "${list_replace}" item "${item}")
-            endif()
-            if(match_result AND "REMOVE_NOT_REGEX" STREQUAL "${list_option}")
-                list(JOIN match_result "" item)
             endif()
             if(match_result AND "REPLACE_NOT_REGEX" STREQUAL "${list_option}")
                 string(REGEX REPLACE "${list_regex}" ";" item_list "${item}")
-                message("${item}----${match_result}------${item_list}")
                 if(POLICY CMP0007)
                     cmake_policy(SET CMP0007 NEW)
                 endif()
@@ -240,9 +233,7 @@ function(replace_list)
                     endif()
                 endforeach()
             endif()
-            if(NOT list_remove OR match_result)
-                list(APPEND "${list_name}_tmp" "${item}")
-            endif()
+            list(APPEND "${list_name}_tmp" "${item}")
         endforeach()
         set("${list_name}" "${${list_name}_tmp}" PARENT_SCOPE)
     endforeach()
@@ -321,7 +312,7 @@ function(add_openssl3)
             nasm_path   "${openssl3_nasm}"
             msvc_bat    "${msvc_bat}"
             msvc_host   "${msvc_host_target}"
-            config_cmd  perl Configure "${perl_toolset}" no-docs no-tests --prefix=${openssl3_binary} --openssldir=${openssl3_binary}/SSL
+            config_cmd  perl Configure "${perl_toolset}" no-docs no-tests --prefix=${openssl3_install} --openssldir=${openssl3_install}/SSL
             build_cmd   nmake
             install_cmd nmake install
         )
@@ -363,10 +354,11 @@ function(add_openssl3)
     set("${openssl3_name}-pkgconfig"   "${openssl3_install}/lib/pkgconfig"    PARENT_SCOPE)
     set("${openssl3_name}-root"        "${openssl3_install}"                  PARENT_SCOPE)
     set(lib_path "${openssl3_install}/lib")
-    set(bin_path "${openssl3_install}/lib")
-    guess_binary_file(name "bz2")
-    set_target_properties("${openssl3_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${bz2_lib}")
+    set(bin_path "${openssl3_install}/bin")
+    guess_binary_file(prefix "lib" name "crypto" suffix "-3-${msvc_target}")
+    guess_binary_file(prefix "lib" name "ssl" suffix "-3-${msvc_target}")
+    set_target_properties("${openssl3_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${ssl_lib};${lib_path}/${crypto_lib}")
     if(openssl3_build_shared)
-        set_target_properties("${openssl3_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${bz2_bin}")
+        set_target_properties("${openssl3_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${ssl_bin};${lib_path}/${crypto_bin}")
     endif()
 endfunction()
