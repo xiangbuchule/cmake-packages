@@ -3,15 +3,13 @@ include(ExternalProject)
 # install mysql8 script
 # script:   script file save path
 # source:   source code path
-# boost:    boost path dir
 function(mysql8_patch_script)
     # params
-    cmake_parse_arguments(mysql8 "" "script;source;boost" "" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "script;source" "" ${ARGN})
     # set params
     set(script_content "\
 # set info
 set(source  \"${mysql8_source}\")
-set(boost   \"${mysql8_boost}\")
 ")
     string(APPEND script_content [[
 # write CMakeLists.txt content
@@ -175,12 +173,11 @@ endfunction()
 # prefix:   prefix path
 # version:  packages version
 # deps:     deps target
-# boost:    boost path dir
 # ARGN: this will add this to build cmake args
 #   ENABLE_LIB_ONLY:    ON
 function(add_mysql8)
     # params
-    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy;boost" "deps" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${mysql8_name}" OR (DEFINED "${mysql8_name}-includes"))
         return()
@@ -193,9 +190,9 @@ function(add_mysql8)
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "mysql8_build_type" args_list_name "mysql8_UNPARSED_ARGUMENTS")
     # address
     set(mysql8_repository_url       "https://github.com/mysql/mysql-server")
-    list(APPEND mysql8_version_list "8.3.0" "8.0.36")
-    list(APPEND mysql8_hash_list    "885ac5d8bdccaeb326959c05574bb78082418ff9246a9b94d9e9c85a93034647"
-                                    "cad607f67050fca7d0e50ee456c7b828574e67274c7bc624c65eb45d9f50f422")
+    list(APPEND mysql8_version_list "8.0.36" "8.0.28")
+    list(APPEND mysql8_hash_list    "cad607f67050fca7d0e50ee456c7b828574e67274c7bc624c65eb45d9f50f422"
+                                    "7F59548FD6E5107F0A5DD7F495267E9B6053EC137B292BCEFBE419C3C21A3C3B")
     # input version is in version list
     string(STRIP "${mysql8_version}" mysql8_version)
     if("${mysql8_version}" STREQUAL "")
@@ -261,9 +258,9 @@ function(add_mysql8)
                                 GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
     # patch
-    set(mysql8_patch_file "${mysql8_patch}/patch.cmake")
-    mysql8_patch_script(script "${mysql8_patch_file}" source "${mysql8_source}" boost "${mysql8_boost}")
-    set(mysql8_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql8_patch_file}")
+    # set(mysql8_patch_file "${mysql8_patch}/patch.cmake")
+    # mysql8_patch_script(script "${mysql8_patch_file}" source "${mysql8_source}")
+    # set(mysql8_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql8_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${mysql8_download}" SOURCE_DIR "${mysql8_source}"
                                         ${mysql8_url_option} CMAKE_ARGS ${mysql8_cmake_options} EXCLUDE_FROM_ALL ON

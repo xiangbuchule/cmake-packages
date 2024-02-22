@@ -55,7 +55,18 @@ add_openssl3(
     version "3.2.1"
     nasm    "${nasm-2.16.01-path}"
     perl    "${perl-5.38.0.1-path}"
-    # proxy           "${socks5_proxy}"
+    # proxy   "${socks5_proxy}"
+    deps    "tool-nasm-2.16.01" "tool-perl-5.38.0.1"
+)
+# openssl1
+include("${custom_module}/packages/openssl/openssl1.cmake")
+add_openssl1(
+    name    "openssl1-1.1.1w"
+    prefix  "${third_path}"
+    version "1.1.1w"
+    nasm    "${nasm-2.16.01-path}"
+    perl    "${perl-5.38.0.1-path}"
+    # proxy   "${socks5_proxy}"
     deps    "tool-nasm-2.16.01" "tool-perl-5.38.0.1"
 )
 
@@ -165,12 +176,15 @@ add_imgui(
 # mysql-connecter-c
 include("${custom_module}/packages/mysql/mysql8.cmake")
 add_mysql8(
-    name        "mysql8-8.3.0"
-    version     "8.3.0"
+    name        "mysql8-8.0.28"
+    version     "8.0.28"
+    deps        "openssl1-1.1.1w"
     prefix      "${third_path}"
     # proxy       "${socks5_proxy}"
-    # deps        "boost-1.84.0"
     # boost       "${boost-1.84.0-includes}"
+    "-DWITH_SSL=${openssl1-1.1.1w-root}"
+    # "-DUSE_BISON_RESULTS_FROM_MAKE_DIST=OFF"
+    "-DDOWNLOAD_BOOST=1" "-DWITH_BOOST=${third_path}/cache/tmp/boost"
 )
 
 # mysql-connecter-c
