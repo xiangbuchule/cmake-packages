@@ -33,6 +33,7 @@ if(NOT EXISTS "${nasm_binary_path}" OR IS_DIRECTORY "${nasm_binary_path}")
 endif()
 # download
 set(nasm_file_path "${nasm_download_path}/${nasm_file}")
+message("download perl from '${nasm_url}' ===> '${nasm_file_path}'")
 file(DOWNLOAD "${nasm_url}" "${nasm_file_path}" SHOW_PROGRESS STATUS nasm_download_statu
     EXPECTED_HASH SHA256=${nasm_sha256}
 )
@@ -42,6 +43,7 @@ if(NOT ("${nasm_download_statu_code}" STREQUAL "0"))
     message(FATAL_ERROR "Download '${nasm_url} ===> ${nasm_file_path}' Error:" ${nasm_download_statu})
 endif()
 # extract
+message("extract perl from '${nasm_file_path}' ===> '${nasm_binary_path}'")
 if(NOT EXISTS "${nasm_binary_path}/LICENSE" OR IS_DIRECTORY "${nasm_binary_path}/LICENSE")
     file(ARCHIVE_EXTRACT INPUT "${nasm_file_path}" DESTINATION "${nasm_binary_path}")
     file(GLOB_RECURSE files "${nasm_binary_path}/*.exe")

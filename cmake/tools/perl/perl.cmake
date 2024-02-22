@@ -34,6 +34,7 @@ if(NOT EXISTS "${perl_binary_path}" OR IS_DIRECTORY "${perl_binary_path}")
 endif()
 # download
 set(perl_file_path "${perl_download_path}/${perl_file}")
+message("download perl from '${perl_url}' ===> '${perl_file_path}'")
 file(DOWNLOAD "${perl_url}" "${perl_file_path}" SHOW_PROGRESS STATUS perl_download_statu
     EXPECTED_HASH SHA256=${perl_sha256}
 )
@@ -43,6 +44,7 @@ if(NOT ("${perl_download_statu_code}" STREQUAL "0"))
     message(FATAL_ERROR "Download '${perl_url} ===> ${perl_file_path}' Error:" ${perl_download_statu})
 endif()
 # extract
+message("extract perl from '${perl_file_path}' ===> '${perl_binary_path}'")
 if(NOT EXISTS "${perl_binary_path}/README.txt" OR IS_DIRECTORY "${perl_binary_path}/README.txt")
     file(ARCHIVE_EXTRACT INPUT "${perl_file_path}" DESTINATION "${perl_binary_path}")
 endif()

@@ -37,8 +37,8 @@ execute_process(
     ERROR_VARIABLE config_error
 )
 if(NOT ("${config_error}" STREQUAL ""))
-    # message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
-    message("Config openssl1 Error:" ${config_error})
+    message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
+    # message("Config openssl1 Error:" ${config_error})
 endif()
 # build
 execute_process(
@@ -47,8 +47,8 @@ execute_process(
     ERROR_VARIABLE build_error
 )
 if(NOT ("${build_error}" STREQUAL ""))
-    # message(FATAL_ERROR "build openssl1 Error:" ${build_error})
-    message("build openssl1 Error:" ${build_error})
+    message(FATAL_ERROR "build openssl1 Error:" ${build_error})
+    # message("build openssl1 Error:" ${build_error})
 endif()
 # install
 execute_process(
@@ -57,8 +57,8 @@ execute_process(
     ERROR_VARIABLE install_error
 )
 if(NOT ("${install_error}" STREQUAL ""))
-    # message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
-    message( "Install openssl1 Error:" ${install_error})
+    message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
+    # message( "Install openssl1 Error:" ${install_error})
 endif()
 ]])
     file(WRITE "${openssl1_script}" "${script_content}")
@@ -269,7 +269,7 @@ function(add_openssl1)
     endif()
     if(openssl1_version_index GREATER_EQUAL 0)
         string(REPLACE "." "_" openssl1_version_tmp "${openssl1_version}")
-        set(openssl1_url   "${openssl1_repository_url}/releases/download/openssl_${openssl1_version_tmp}/openssl-${openssl1_version}.tar.gz")
+        set(openssl1_url   "${openssl1_repository_url}/releases/download/OpenSSL_${openssl1_version_tmp}/openssl-${openssl1_version}.tar.gz")
         set(openssl1_file  "openssl1-${openssl1_version}.tar.gz")
         list(GET openssl1_hash_list ${openssl1_version_index} openssl1_hash)
     endif()
@@ -313,9 +313,9 @@ function(add_openssl1)
             nasm_path   "${openssl1_nasm}"
             msvc_bat    "${msvc_bat}"
             msvc_host   "${msvc_host_target}"
-            config_cmd  perl Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL
+            config_cmd  perl -w Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL
             build_cmd   nmake
-            install_cmd nmake install
+            install_cmd nmake install_sw
         )
         set(openssl1_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${msvc_patch_script_file}")
         set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND "")

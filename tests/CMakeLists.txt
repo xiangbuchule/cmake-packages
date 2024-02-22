@@ -3,6 +3,10 @@ cmake_minimum_required (VERSION 3.12)
 # 项目名
 project(Tests)
 
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 # 设置代理
 set(http_proxy          "http://127.0.0.1:10809")
 set(socks5_proxy        "socks5://127.0.0.1:10808")
@@ -38,12 +42,12 @@ add_python3(
 # perl
 include("${custom_module}/tools/perl/perl.cmake")
 add_perl(
-    name    "perl-5.38.0.1"
+    name    "perl-5.36.1.1"
     prefix  "${third_path}"
-    url     "https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_5380_5361/strawberry-perl-5.38.0.1-64bit-portable.zip"
-    file    "perl-5.38.0.1.zip"
+    url     "https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_5380_5361/strawberry-perl-5.36.1.1-64bit-portable.zip"
+    file    "perl-5.36.1.1.zip"
     # proxy   "${socks5_proxy}"
-    sha256  "CA6402A466939D5D658CC0D09A20DC59635AE68F6903A92A747A802539E40908"
+    sha256  "96dc0fc440e3123dd8d58df3498e41caba20610f33ed67af937a61b296c4786c"
     # pkgs    "jinja2"
 )
 
@@ -54,9 +58,9 @@ add_openssl3(
     prefix  "${third_path}"
     version "3.2.1"
     nasm    "${nasm-2.16.01-path}"
-    perl    "${perl-5.38.0.1-path}"
+    perl    "${perl-5.36.1.1-path}"
     # proxy   "${socks5_proxy}"
-    deps    "tool-nasm-2.16.01" "tool-perl-5.38.0.1"
+    deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
 )
 # openssl1
 include("${custom_module}/packages/openssl/openssl1.cmake")
@@ -65,9 +69,9 @@ add_openssl1(
     prefix  "${third_path}"
     version "1.1.1w"
     nasm    "${nasm-2.16.01-path}"
-    perl    "${perl-5.38.0.1-path}"
+    perl    "${perl-5.36.1.1-path}"
     # proxy   "${socks5_proxy}"
-    deps    "tool-nasm-2.16.01" "tool-perl-5.38.0.1"
+    deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
 )
 
 # boost
@@ -176,8 +180,8 @@ add_imgui(
 # mysql-connecter-c
 include("${custom_module}/packages/mysql/mysql-connector-c.cmake")
 add_mysql_connector_c(
-    name    "mysql-connector-c-6.1.10"
-    version "6.1.10"
+    name    "mysql-connector-c-6.1.11"
+    version "6.1.11"
     prefix  "${third_path}"
     # proxy   "${socks5_proxy}"
 )
@@ -187,9 +191,10 @@ include("${custom_module}/packages/mysql/mysql-connector-cpp.cmake")
 add_mysql_connector_cpp(
     name    "mysql-connector-cpp-8.0.33"
     version "8.0.33"
+    deps    "pkg-openssl1-1.1.1w"
     prefix  "${third_path}"
     # proxy   "${socks5_proxy}"
-    # "-DWITH_JDBC=OFF" "-DWITH_SSL=${openssl1-1.1.1w-root}"
+    "-DWITH_SSL=${openssl1-1.1.1w-root}"
 )
 
 # ==================================================
