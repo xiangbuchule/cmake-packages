@@ -174,26 +174,22 @@ add_imgui(
 )
 
 # mysql-connecter-c
-include("${custom_module}/packages/mysql/mysql8.cmake")
-add_mysql8(
-    name        "mysql8-8.0.28"
-    version     "8.0.28"
-    deps        "openssl1-1.1.1w"
-    prefix      "${third_path}"
-    # proxy       "${socks5_proxy}"
-    # boost       "${boost-1.84.0-includes}"
-    "-DWITH_SSL=${openssl1-1.1.1w-root}"
-    # "-DUSE_BISON_RESULTS_FROM_MAKE_DIST=OFF"
-    "-DDOWNLOAD_BOOST=1" "-DWITH_BOOST=${third_path}/cache/tmp/boost"
-)
-
-# mysql-connecter-c
 include("${custom_module}/packages/mysql/mysql-connector-c.cmake")
 add_mysql_connector_c(
-    name        "mysql-connector-c-6.1.11"
-    version     "6.1.11"
-    prefix      "${third_path}"
-    # proxy       "${socks5_proxy}"
+    name    "mysql-connector-c-6.1.10"
+    version "6.1.10"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+)
+
+# mysql-connecter-cpp
+include("${custom_module}/packages/mysql/mysql-connector-cpp.cmake")
+add_mysql_connector_cpp(
+    name    "mysql-connector-cpp-8.0.33"
+    version "8.0.33"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+    # "-DWITH_JDBC=OFF" "-DWITH_SSL=${openssl1-1.1.1w-root}"
 )
 
 # ==================================================

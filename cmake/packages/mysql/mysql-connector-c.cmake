@@ -163,8 +163,9 @@ function(add_mysql_connector_c)
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "mysql_build_type" args_list_name "mysql_UNPARSED_ARGUMENTS")
     # address
     set(mysql_repository_url        "https://downloads.mysql.com/archives/get/p/19/file")
-    list(APPEND mysql_version_list  "6.1.11")
-    list(APPEND mysql_hash_list     "C8664851487200162B38B6F3C8DB69850BD4F0E4C5FF5A6D161DBFB5CB76B6C4")
+    list(APPEND mysql_version_list  "6.1.11" "6.1.10")
+    list(APPEND mysql_hash_list     "C8664851487200162B38B6F3C8DB69850BD4F0E4C5FF5A6D161DBFB5CB76B6C4"
+                                    "73d2c3d633dcec63b9e985e524cc386ce52ddedcd06bdc40e094aaae35b14a69")
     # input version is in version list
     string(STRIP "${mysql_version}" mysql_version)
     if("${mysql_version}" STREQUAL "")
