@@ -164,7 +164,7 @@ function(add_mysql_connector_c)
     # address
     set(mysql_repository_url        "https://downloads.mysql.com/archives/get/p/19/file")
     list(APPEND mysql_version_list  "6.1.11")
-    list(APPEND mysql_hash_list     "44d7c9be33b148a7391c5e1690b4788de3ced3e79084f3a2787d103bd12cd495")
+    list(APPEND mysql_hash_list     "C8664851487200162B38B6F3C8DB69850BD4F0E4C5FF5A6D161DBFB5CB76B6C4")
     # input version is in version list
     string(STRIP "${mysql_version}" mysql_version)
     if("${mysql_version}" STREQUAL "")
@@ -176,7 +176,7 @@ function(add_mysql_connector_c)
         set(mysql_version_index 0)
     endif()
     list(GET mysql_version_list ${mysql_version_index} mysql_version)
-    set(mysql_url   "${mysql_repository_url}/mysql-connector-c-${mysql_version}-src.zip")
+    set(mysql_url   "${mysql_repository_url}/mysql-connector-c-${mysql_version}-src.tar.gz")
     set(mysql_file  "mysql-connector-c-${mysql_version}.zip")
     list(GET mysql_hash_list ${mysql_version_index} mysql_hash)
     # set build path
