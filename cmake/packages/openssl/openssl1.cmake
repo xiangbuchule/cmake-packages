@@ -10,7 +10,7 @@ include(ExternalProject)
 # config_cmd:   config command
 # build_cmd:    build command
 # install_cmd:  install command
-function(openssl1_msvc_patch_script)
+function(openssl1_patch_script)
     # params
     cmake_parse_arguments(openssl1 "" "script;source;perl_path;nasm_path;msvc_bat;msvc_host" "config_cmd;build_cmd;install_cmd" ${ARGN})
     # set params
@@ -27,38 +27,49 @@ set(install_cmd ${openssl1_install_cmd})
 ")
     # set other script
     string(APPEND script_content [[
-# run env
-set(perl_nasm_env   "${perl}/perl/bin\\\\;${nasm}\\\\;!PATH!")
-set(msvc_cmd_env    call "${msvc_bat}" "${msvc_host}" && call set "PATH=${perl_nasm_env}")
-# config
-execute_process(
-    COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${config_cmd}
-    WORKING_DIRECTORY "${source}"
-    ERROR_VARIABLE config_error
-)
-if(NOT ("${config_error}" STREQUAL ""))
-    message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
-    # message("Config openssl1 Error:" ${config_error})
-endif()
-# build
-execute_process(
-    COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${build_cmd}
-    WORKING_DIRECTORY "${source}"
-    ERROR_VARIABLE build_error
-)
-if(NOT ("${build_error}" STREQUAL ""))
-    message(FATAL_ERROR "build openssl1 Error:" ${build_error})
-    # message("build openssl1 Error:" ${build_error})
-endif()
-# install
-execute_process(
-    COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${install_cmd}
-    WORKING_DIRECTORY "${source}"
-    ERROR_VARIABLE install_error
-)
-if(NOT ("${install_error}" STREQUAL ""))
-    message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
-    # message( "Install openssl1 Error:" ${install_error})
+# write Configure content
+set(regex_string "use OpenSSL::Glob\;")
+string(APPEND replace_content "${regex_string}\n")
+string(APPEND replace_content "no warnings 'all';")
+file(READ "${source}/Configure" old_content)
+string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
+file(WRITE "${source}/Configure" "${new_content}")
+if(msvc_bat)
+    # run env
+    set(perl_nasm_env   "${perl}/perl/bin\;${nasm}\;!PATH!")
+    set(msvc_cmd_env    call "${msvc_bat}" "${msvc_host}" && call set "PATH=${perl_nasm_env}")
+    # config
+    if(NOT EXISTS "${source}/configdata.pm" AND NOT IS_DIRECTORY "${source}/configdata.pm")
+        execute_process(
+            COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${config_cmd}
+            WORKING_DIRECTORY "${source}"
+            ERROR_VARIABLE config_error
+        )
+        if(NOT ("${config_error}" STREQUAL ""))
+            message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
+            # message("Config openssl1 Error:" ${config_error})
+        endif()
+    endif()
+    # build
+    execute_process(
+        COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${build_cmd}
+        WORKING_DIRECTORY "${source}"
+        ERROR_VARIABLE build_error
+    )
+    if(NOT ("${build_error}" STREQUAL ""))
+        message(FATAL_ERROR "build openssl1 Error:" ${build_error})
+        # message("build openssl1 Error:" ${build_error})
+    endif()
+    # install
+    execute_process(
+        COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${install_cmd}
+        WORKING_DIRECTORY "${source}"
+        ERROR_VARIABLE install_error
+    )
+    if(NOT ("${install_error}" STREQUAL ""))
+        message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
+        # message( "Install openssl1 Error:" ${install_error})
+    endif()
 endif()
 ]])
     file(WRITE "${openssl1_script}" "${script_content}")
@@ -286,7 +297,18 @@ function(add_openssl1)
     if(NOT EXISTS "${openssl1_binary}" OR IS_DIRECTORY "${openssl1_binary}")
         file(MAKE_DIRECTORY "${openssl1_binary}")
     endif()
-    # is install
+    # set git config
+    if(NOT ("" STREQUAL "${openssl1_proxy}"))
+        set(git_config GIT_CONFIG http.proxy=${openssl1_proxy} https.proxy=${openssl1_proxy})
+    endif()
+    # set url option
+    if(${openssl1_version_index} GREATER_EQUAL 0)
+        set(openssl1_url_option URL "${openssl1_url}" URL_HASH SHA256=${openssl1_hash} DOWNLOAD_NAME "${openssl1_file}")
+    else()
+        set(openssl1_url_option GIT_REPOSITORY "${openssl1_repository_url}" GIT_TAG "${openssl1_version}"
+                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
+    endif()
+    # compiler
     if(MSVC)
         if(${CMAKE_VS_PLATFORM_NAME} EQUAL win32)
             set(msvc_target x86)
@@ -305,41 +327,35 @@ function(add_openssl1)
             set(perl_toolset "VC-WIN64A")
         endif()
         get_filename_component(msvc_bat "${CMAKE_LINKER}../../../../../../../../Auxiliary/Build/vcvarsall.bat" ABSOLUTE)
-        set(msvc_patch_script_file "${openssl1_patch}/patch.cmake")
-        openssl1_msvc_patch_script(
-            script      "${msvc_patch_script_file}"
-            source      "${openssl1_source}"
-            perl_path   "${openssl1_perl}"
-            nasm_path   "${openssl1_nasm}"
-            msvc_bat    "${msvc_bat}"
-            msvc_host   "${msvc_host_target}"
-            config_cmd  perl -w Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL
-            build_cmd   nmake
-            install_cmd nmake install_sw
-        )
-        set(openssl1_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${msvc_patch_script_file}")
         set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND "")
         set(openssl1_build_cmd BUILD_COMMAND COMMAND "")
         set(openssl1_install_cmd INSTALL_COMMAND COMMAND "")
-    endif()
-    # set git config
-    if(NOT ("" STREQUAL "${openssl1_proxy}"))
-        set(git_config GIT_CONFIG http.proxy=${openssl1_proxy} https.proxy=${openssl1_proxy})
-    endif()
-    # set url option
-    if(${openssl1_version_index} GREATER_EQUAL 0)
-        set(openssl1_url_option URL "${openssl1_url}" URL_HASH SHA256=${openssl1_hash} DOWNLOAD_NAME "${openssl1_file}")
+    elseif(MINGW)
+        set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND perl -w Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL)
+        set(openssl1_build_cmd BUILD_COMMAND COMMAND "")
+        set(openssl1_install_cmd INSTALL_COMMAND COMMAND "")
     else()
-        set(openssl1_url_option GIT_REPOSITORY "${openssl1_repository_url}" GIT_TAG "${openssl1_version}"
-                                GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
+        set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND perl -w Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL)
+        set(openssl1_build_cmd BUILD_COMMAND COMMAND "")
+        set(openssl1_install_cmd INSTALL_COMMAND COMMAND "")
     endif()
     # patch
-    # set(openssl1_patch_file "${openssl1_patch}/patch.cmake")
-    # openssl1_patch_script(script "${openssl1_patch_file}" source "${openssl1_source}")
-    # set(openssl1_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${openssl1_patch_file}")
+    set(openssl1_patch_file "${openssl1_patch}/patch.cmake")
+    openssl1_patch_script(
+        script      "${openssl1_patch_file}"
+        source      "${openssl1_source}"
+        perl_path   "${openssl1_perl}"
+        nasm_path   "${openssl1_nasm}"
+        msvc_bat    "${msvc_bat}"
+        msvc_host   "${msvc_host_target}"
+        config_cmd  perl -w Configure "${perl_toolset}" no-tests --prefix=${openssl1_install} --openssldir=${openssl1_install}/SSL
+        build_cmd   nmake
+        install_cmd nmake install_sw
+    )
+    set(openssl1_patch_cmd PATCH_COMMAND "${CMAKE_COMMAND}" -P "${openssl1_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${openssl1_download}" SOURCE_DIR "${openssl1_source}"
-                                        ${openssl1_url_option} EXCLUDE_FROM_ALL ON  ${openssl1_patch_cmd}
+                                        ${openssl1_url_option} EXCLUDE_FROM_ALL ON ${openssl1_patch_cmd}
                                         ${openssl1_configure_cmd} ${openssl1_build_cmd} ${openssl1_install_cmd} DEPENDS ${openssl1_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
