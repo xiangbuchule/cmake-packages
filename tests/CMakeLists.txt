@@ -31,10 +31,10 @@ add_python3(
     prefix          "${third_path}"
     url             "https://www.python.org/ftp/python/3.13.0/python-3.13.0a1-embed-amd64.zip"
     file            "python3-3.13.0a1.zip"
-    # proxy           "${socks5_proxy}"
+    proxy           "${socks5_proxy}"
     sha256          "fb8733603b48722e6cdfcdee2b8b4d4f5c8f6723ef8a9478ab211d6469226df6"
     pkgs            "jinja2"
-    pip_url         "https://bootstrap.pypa.io/get-pip.py"
+    pip_url         "https://bootstrap.pypa.io/pip/get-pip.py"
     pip_file        "get-pip.py"
     pip_source_url  "https://pypi.tuna.tsinghua.edu.cn"
 )
@@ -46,9 +46,8 @@ add_perl(
     prefix  "${third_path}"
     url     "https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_5380_5361/strawberry-perl-5.36.1.1-64bit-portable.zip"
     file    "perl-5.36.1.1.zip"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     sha256  "96dc0fc440e3123dd8d58df3498e41caba20610f33ed67af937a61b296c4786c"
-    # pkgs    "jinja2"
 )
 
 # openssl3

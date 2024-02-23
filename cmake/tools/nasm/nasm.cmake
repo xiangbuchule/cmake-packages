@@ -1,73 +1,87 @@
-# install python script
-# script:           script file save path
-# name:             python name
-# url:              python install url
-# file:             python install file name
-# proxy:            pip install use proxy
-# pkgs:             pip install packages
-# sha256:           python file sha256 check
-# download:         python file save dir
-# binary:           python file extract and install dir
-function(nasm_patch_script)
+# download nasm script
+# script:   script file save path
+# url:      nasm download url
+# file:     nasm download file path
+# sha256:   nasm file sha256 check
+# proxy:    proxy
+function(nasm_patch_download_script)
     # params
-    cmake_parse_arguments(nasm "" "script;name;url;file;sha256;download;binary;proxy" "" ${ARGN})
+    cmake_parse_arguments(nasm "" "script;url;file;sha256;proxy" "" ${ARGN})
     # set params
     set(script_content "\
 # set nasm info
-set(nasm_url              \"${nasm_url}\")
-set(nasm_name             \"${nasm_name}\")
-set(nasm_file             \"${nasm_file}\")
-set(nasm_proxy            \"${nasm_proxy}\")
-set(nasm_sha256           \"${nasm_sha256}\")
-set(nasm_download_path    \"${nasm_download}\")
-set(nasm_binary_path      \"${nasm_binary}/\${nasm_name}\")
+set(nasm_url    \"${nasm_url}\")
+set(nasm_file   \"${nasm_file}\")
+set(nasm_sha256 \"${nasm_sha256}\")
+set(proxy       \"${nasm_proxy}\")
 ")
-    # set other script
+    # set script content
     string(APPEND script_content [[
-# create dir
-if(NOT EXISTS "${nasm_download_path}" OR IS_DIRECTORY "${nasm_download_path}")
-    file(MAKE_DIRECTORY "${nasm_download_path}")
-endif()
-if(NOT EXISTS "${nasm_binary_path}" OR IS_DIRECTORY "${nasm_binary_path}")
-    file(MAKE_DIRECTORY "${nasm_binary_path}")
+# set proxy
+if(NOT ("" STREQUAL "${proxy}"))
+    set(ENV{http_proxy}     "${proxy}")
+    set(ENV{https_proxy}    "${proxy}")
 endif()
 # download
-set(nasm_file_path "${nasm_download_path}/${nasm_file}")
-message("download perl from '${nasm_url}' ===> '${nasm_file_path}'")
-file(DOWNLOAD "${nasm_url}" "${nasm_file_path}" SHOW_PROGRESS STATUS nasm_download_statu
+file(
+    DOWNLOAD "${nasm_url}" "${nasm_file}"
     EXPECTED_HASH SHA256=${nasm_sha256}
+    SHOW_PROGRESS
+    STATUS nasm_download_statu
 )
 list(GET nasm_download_statu 0 nasm_download_statu_code)
 list(REMOVE_AT nasm_download_statu 0)
 if(NOT ("${nasm_download_statu_code}" STREQUAL "0"))
-    message(FATAL_ERROR "Download '${nasm_url} ===> ${nasm_file_path}' Error:" ${nasm_download_statu})
-endif()
-# extract
-message("extract perl from '${nasm_file_path}' ===> '${nasm_binary_path}'")
-if(NOT EXISTS "${nasm_binary_path}/LICENSE" OR IS_DIRECTORY "${nasm_binary_path}/LICENSE")
-    file(ARCHIVE_EXTRACT INPUT "${nasm_file_path}" DESTINATION "${nasm_binary_path}")
-    file(GLOB_RECURSE files "${nasm_binary_path}/*.exe")
-    file(GLOB_RECURSE files_license "${nasm_binary_path}/LICENSE")
-    file(GLOB tmp_dirs LIST_DIRECTORIES true "${nasm_binary_path}/*")
-    foreach(item IN LISTS files files_license)
-        get_filename_component(tmp_name "${item}" NAME)
-        get_filename_component(tmp_dir "${item}" DIRECTORY)
-        get_filename_component(tmp_dir "${tmp_dir}" DIRECTORY)
-        file(RENAME "${item}" "${nasm_binary_path}/${tmp_name}")
-    endforeach()
-    file(REMOVE_RECURSE "${tmp_dirs}")
+    message(FATAL_ERROR "Download '${nasm_url}' ===> '${nasm_file}' Error: ${nasm_download_statu}")
 endif()
 ]])
     file(WRITE "${nasm_script}" "${script_content}")
 endfunction()
 
-# name:             target name
-# prefix:           prefix path
-# url:              download url
-# file:             download file name
-# sha256:           hash sha256 check
-# proxy:            proxy
-# deps:             deps target
+# extract nasm script
+# script:   script file save path
+# file:     nasm file path
+# target:   nasm extract dir
+function(nasm_patch_extract_script)
+    # params
+    cmake_parse_arguments(nasm "" "script;file;target" "" ${ARGN})
+    # set params
+    set(script_content "\
+# set nasm info
+set(nasm_file   \"${nasm_file}\")
+set(nasm_target \"${nasm_target}\")
+")
+    # set script content
+    string(APPEND script_content [[
+# extract
+if(NOT EXISTS "${nasm_target}/LICENSE" OR IS_DIRECTORY "${nasm_target}/LICENSE")
+    file(ARCHIVE_EXTRACT INPUT "${nasm_file}" DESTINATION ${nasm_target})
+    file(GLOB_RECURSE files LIST_DIRECTORIES ON "${nasm_target}/**")
+    foreach(item IN LISTS files)
+        string(REGEX REPLACE "${nasm_target}/" "" file_name "${item}")
+        string(REGEX MATCH "/" match_result "${file_name}")
+        if(match_result)
+            get_filename_component(file_name "${file_name}" NAME)
+            file(RENAME "${item}" "${nasm_target}/${file_name}")
+        else()
+            list(APPEND remove_lists "${nasm_target}/${file_name}")
+        endif()
+    endforeach()
+    foreach(item IN LISTS remove_lists)
+        file(REMOVE_RECURSE "${item}")
+    endforeach()
+endif()
+]])
+    file(WRITE "${nasm_script}" "${script_content}")
+endfunction()
+
+# name:     target name
+# prefix:   prefix path
+# url:      download url
+# file:     download file name
+# sha256:   hash sha256 check
+# proxy:    proxy
+# deps:     deps target
 function(add_nasm)
     # params
     cmake_parse_arguments(nasm   "" "name;prefix;url;file;sha256;proxy" "deps" ${ARGN})
@@ -78,28 +92,55 @@ function(add_nasm)
     endif()
     # set build path
     set(nasm_download    "${nasm_prefix}/cache/download")
-    set(nasm_source      "${nasm_prefix}/cache/tool")
+    set(nasm_source      "${nasm_prefix}/cache/tool/${nasm_name}")
     set(nasm_patch       "${nasm_prefix}/cache/patch/${nasm_name}")
-    # create patch scrips
+    if(NOT EXISTS "${nasm_download}" OR NOT (IS_DIRECTORY "${nasm_download}"))
+        file(MAKE_DIRECTORY "${nasm_download}")
+    endif()
+    if(NOT EXISTS "${nasm_source}" OR NOT (IS_DIRECTORY "${nasm_source}"))
+        file(MAKE_DIRECTORY "${nasm_source}")
+    endif()
     if(NOT EXISTS "${nasm_patch}" OR NOT (IS_DIRECTORY "${nasm_patch}"))
         file(MAKE_DIRECTORY "${nasm_patch}")
     endif()
-    set(nasm_patch_script_file "${nasm_patch}/patch.cmake")
-    nasm_patch_script(
-        script          "${nasm_patch_script_file}"
-        name            "${nasm_name}"
-        url             "${nasm_url}"
-        file            "${nasm_file}"
-        sha256          "${nasm_sha256}"
-        download        "${nasm_download}"
-        binary          "${nasm_source}"
-        proxy           "${nasm_proxy}"
+    # create patch scrips
+    set(nasm_patch_download_script_file "${nasm_patch}/download.cmake")
+    nasm_patch_download_script(
+        script  "${nasm_patch_download_script_file}"
+        url     "${nasm_url}"
+        file    "${nasm_download}/${nasm_file}"
+        sha256  "${nasm_sha256}"
+        proxy   "${nasm_proxy}"
     )
-    set(nasm_source "${nasm_source}/${nasm_name}")
+    set(nasm_patch_extract_script_file "${nasm_patch}/extract.cmake")
+    nasm_patch_extract_script(
+        script  "${nasm_patch_extract_script_file}"
+        file    "${nasm_download}/${nasm_file}"
+        target  "${nasm_source}"
+    )
+    # add build rule
+    add_custom_command(
+        OUTPUT "${nasm_download}/${nasm_file}"
+        COMMAND "${CMAKE_COMMAND}" -P "${nasm_patch_download_script_file}"
+        WORKING_DIRECTORY "${nasm_download}"
+        USES_TERMINAL
+        COMMENT "Download NASM '${nasm_url}' ===> '${nasm_download}/${nasm_file}' ..."
+    )
+    add_custom_command(
+        OUTPUT "${nasm_source}/touch"
+        COMMAND "${CMAKE_COMMAND}" -P "${nasm_patch_extract_script_file}"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${nasm_source}/touch"
+        WORKING_DIRECTORY "${nasm_source}"
+        MAIN_DEPENDENCY "${nasm_download}/${nasm_file}"
+        USES_TERMINAL
+        COMMENT "Extract NASM '${nasm_download}/${nasm_file}' ===> '${nasm_source}' ..."
+    )
     # set target
     add_custom_target(
-        "${target_name}" WORKING_DIRECTORY "${nasm_patch}" USES_TERMINAL
-        COMMAND "${CMAKE_COMMAND}" -P "${nasm_patch_script_file}"
+        "${target_name}"
+        DEPENDS "${nasm_source}/touch"
+        WORKING_DIRECTORY "${nasm_patch}"
+        COMMENT "Build '${nasm_name}' In '${nasm_source}'."
     )
     # add deps
     if(NOT ("${nasm_deps}" STREQUAL ""))

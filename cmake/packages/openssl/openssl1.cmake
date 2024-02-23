@@ -34,43 +34,43 @@ string(APPEND replace_content "no warnings 'all';")
 file(READ "${source}/Configure" old_content)
 string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
 file(WRITE "${source}/Configure" "${new_content}")
-if(msvc_bat)
-    # run env
-    set(perl_nasm_env   "${perl}/perl/bin\;${nasm}\;!PATH!")
-    set(msvc_cmd_env    call "${msvc_bat}" "${msvc_host}" && call set "PATH=${perl_nasm_env}")
-    # config
-    if(NOT EXISTS "${source}/configdata.pm" AND NOT IS_DIRECTORY "${source}/configdata.pm")
-        execute_process(
-            COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${config_cmd}
-            WORKING_DIRECTORY "${source}"
-            ERROR_VARIABLE config_error
-        )
-        if(NOT ("${config_error}" STREQUAL ""))
-            message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
-            # message("Config openssl1 Error:" ${config_error})
-        endif()
-    endif()
-    # build
-    execute_process(
-        COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${build_cmd}
-        WORKING_DIRECTORY "${source}"
-        ERROR_VARIABLE build_error
-    )
-    if(NOT ("${build_error}" STREQUAL ""))
-        message(FATAL_ERROR "build openssl1 Error:" ${build_error})
-        # message("build openssl1 Error:" ${build_error})
-    endif()
-    # install
-    execute_process(
-        COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${install_cmd}
-        WORKING_DIRECTORY "${source}"
-        ERROR_VARIABLE install_error
-    )
-    if(NOT ("${install_error}" STREQUAL ""))
-        message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
-        # message( "Install openssl1 Error:" ${install_error})
-    endif()
-endif()
+# if(msvc_bat)
+#     # run env
+#     set(perl_nasm_env   "${perl}/perl/bin\;${nasm}\;!PATH!")
+#     set(msvc_cmd_env    call "${msvc_bat}" "${msvc_host}" && call set "PATH=${perl_nasm_env}")
+#     # config
+#     if(NOT EXISTS "${source}/configdata.pm" AND NOT IS_DIRECTORY "${source}/configdata.pm")
+#         execute_process(
+#             COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${config_cmd}
+#             WORKING_DIRECTORY "${source}"
+#             ERROR_VARIABLE config_error
+#         )
+#         if(NOT ("${config_error}" STREQUAL ""))
+#             message(FATAL_ERROR "Config openssl1 Error:" ${config_error})
+#             # message("Config openssl1 Error:" ${config_error})
+#         endif()
+#     endif()
+#     # build
+#     execute_process(
+#         COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${build_cmd}
+#         WORKING_DIRECTORY "${source}"
+#         ERROR_VARIABLE build_error
+#     )
+#     if(NOT ("${build_error}" STREQUAL ""))
+#         message(FATAL_ERROR "build openssl1 Error:" ${build_error})
+#         # message("build openssl1 Error:" ${build_error})
+#     endif()
+#     # install
+#     execute_process(
+#         COMMAND cmd /V:ON /C ${msvc_cmd_env} && ${install_cmd}
+#         WORKING_DIRECTORY "${source}"
+#         ERROR_VARIABLE install_error
+#     )
+#     if(NOT ("${install_error}" STREQUAL ""))
+#         message(FATAL_ERROR "Install openssl1 Error:" ${install_error})
+#         # message( "Install openssl1 Error:" ${install_error})
+#     endif()
+# endif()
 ]])
     file(WRITE "${openssl1_script}" "${script_content}")
 endfunction()
@@ -327,6 +327,31 @@ function(add_openssl1)
             set(perl_toolset "VC-WIN64A")
         endif()
         get_filename_component(msvc_bat "${CMAKE_LINKER}../../../../../../../../Auxiliary/Build/vcvarsall.bat" ABSOLUTE)
+        # set cmd env
+        set(perl_nasm_env   "${openssl1_perl}/perl/bin\;${openssl1_nasm}\;!PATH!")
+        set(msvc_cmd_env    call "${msvc_bat}" "${msvc_host_target}" && call set "PATH=${perl_nasm_env}")
+        add_custom_command(
+            OUTPUT "${openssl1_source}/configdata.pm"
+            COMMAND cmd /V:ON /C ${msvc_cmd_env} && perl Configure "${perl_toolset}"
+                    WORKING_DIRECTORY "${openssl1_source}"
+                    VERBATIM USES_TERMINAL
+                    COMMENT "Configure OpenSSL ..."
+        )
+        add_custom_command(
+            OUTPUT "${openssl1_source}/README"
+            COMMAND cmd /V:ON /C ${msvc_cmd_env} && nmake
+                    WORKING_DIRECTORY "${openssl1_source}"
+                    VERBATIM USES_TERMINAL
+                    MAIN_DEPENDENCY "${openssl1_source}/configdata.pm"
+                    COMMENT "Build OpenSSL ..."
+        )
+        add_custom_command(
+            OUTPUT "${openssl1_source}/README.ENGINE"
+            COMMAND cmd /V:ON /C ${msvc_cmd_env} && nmake install install_sw
+                    WORKING_DIRECTORY "${openssl1_source}"
+                    VERBATIM USES_TERMINAL
+                    COMMENT "Install OpenSSL ..."
+        )
         set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND "")
         set(openssl1_build_cmd BUILD_COMMAND COMMAND "")
         set(openssl1_install_cmd INSTALL_COMMAND COMMAND "")
@@ -352,7 +377,7 @@ function(add_openssl1)
         build_cmd   nmake
         install_cmd nmake install_sw
     )
-    set(openssl1_patch_cmd PATCH_COMMAND "${CMAKE_COMMAND}" -P "${openssl1_patch_file}")
+    set(openssl1_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${openssl1_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${openssl1_download}" SOURCE_DIR "${openssl1_source}"
                                         ${openssl1_url_option} EXCLUDE_FROM_ALL ON ${openssl1_patch_cmd}
