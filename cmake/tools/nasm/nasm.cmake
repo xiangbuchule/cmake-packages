@@ -91,9 +91,13 @@ function(add_nasm)
         return()
     endif()
     # set build path
-    set(nasm_download    "${nasm_prefix}/cache/download")
-    set(nasm_source      "${nasm_prefix}/cache/tool/${nasm_name}")
-    set(nasm_patch       "${nasm_prefix}/cache/patch/${nasm_name}")
+    set(nasm_tmp        "${CMAKE_CURRENT_BINARY_DIR}/${target_name}-prefix")
+    set(nasm_download   "${nasm_prefix}/cache/download")
+    set(nasm_source     "${nasm_prefix}/cache/tool/${nasm_name}")
+    set(nasm_patch      "${nasm_prefix}/cache/patch/${nasm_name}")
+    if(NOT EXISTS "${nasm_tmp}" OR NOT (IS_DIRECTORY "${nasm_tmp}"))
+        file(MAKE_DIRECTORY "${nasm_tmp}")
+    endif()
     if(NOT EXISTS "${nasm_download}" OR NOT (IS_DIRECTORY "${nasm_download}"))
         file(MAKE_DIRECTORY "${nasm_download}")
     endif()
@@ -127,9 +131,9 @@ function(add_nasm)
         COMMENT "Download NASM '${nasm_url}' ===> '${nasm_download}/${nasm_file}' ..."
     )
     add_custom_command(
-        OUTPUT "${nasm_source}/touch"
+        OUTPUT "${nasm_tmp}/touch"
         COMMAND "${CMAKE_COMMAND}" -P "${nasm_patch_extract_script_file}"
-        COMMAND "${CMAKE_COMMAND}" -E touch "${nasm_source}/touch"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${nasm_tmp}/touch"
         WORKING_DIRECTORY "${nasm_source}"
         MAIN_DEPENDENCY "${nasm_download}/${nasm_file}"
         USES_TERMINAL
@@ -138,7 +142,7 @@ function(add_nasm)
     # set target
     add_custom_target(
         "${target_name}"
-        DEPENDS "${nasm_source}/touch"
+        DEPENDS "${nasm_tmp}/touch"
         WORKING_DIRECTORY "${nasm_patch}"
         COMMENT "Build '${nasm_name}' In '${nasm_source}'."
     )

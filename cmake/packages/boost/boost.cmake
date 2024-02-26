@@ -249,8 +249,8 @@ function(add_boost)
         "${pkg_name}" "${pkg_name}-bootstrap"
         COMMAND "${bootstrap_script}"
         WORKING_DIRECTORY "${boost_source}"
-        DEPENDEES update
-        DEPENDERS patch
+        DEPENDEES "update"
+        DEPENDERS "patch"
         USES_TERMINAL ON
     )
     # check is build shared/static

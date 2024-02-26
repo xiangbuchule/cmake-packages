@@ -50,6 +50,20 @@ add_perl(
     sha256  "96dc0fc440e3123dd8d58df3498e41caba20610f33ed67af937a61b296c4786c"
 )
 
+# stdexec
+include("${custom_module}/packages/stdexec/stdexec.cmake")
+add_stdexec(name "stdexec-main" version "main" prefix "${third_path}" proxy "${socks5_proxy}")
+
+# zlib
+include("${custom_module}/packages/zlib/zlib.cmake")
+add_zlib(
+    name    "zlib-1.3.1"
+    version "1.3.1"
+    prefix  "${third_path}"
+    # proxy   "${socks5_proxy}"
+    "-DZLIB_BUILD_EXAMPLES=OFF"
+)
+
 # openssl3
 include("${custom_module}/packages/openssl/openssl3.cmake")
 add_openssl3(
@@ -63,14 +77,18 @@ add_openssl3(
 )
 # openssl1
 include("${custom_module}/packages/openssl/openssl1.cmake")
+get_target_property(zlib-lib zlib-1.3.1 IMPORTED_IMPLIB)
 add_openssl1(
-    name    "openssl1-1.1.1w"
-    prefix  "${third_path}"
-    version "1.1.1w"
-    nasm    "${nasm-2.16.01-path}"
-    perl    "${perl-5.36.1.1-path}"
-    # proxy   "${socks5_proxy}"
-    deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
+    name        "openssl1-1.1.1w"
+    prefix      "${third_path}"
+    version     "1.1.1w"
+    nasm        "${nasm-2.16.01-path}"
+    perl        "${perl-5.36.1.1-path}"
+    proxy       "${socks5_proxy}"
+    deps        "tool-nasm-2.16.01" "tool-perl-5.36.1.1" "pkg-zlib-1.3.1"
+    options     "no-tests" "zlib" "zlib-dynamic"
+                "--with-zlib-lib=${zlib-lib}"
+                "--with-zlib-include=${zlib-1.3.1-root}/include"
 )
 
 # boost
@@ -79,17 +97,7 @@ add_boost(
     name        "boost-1.84.0"
     version     "1.84.0"
     prefix      "${third_path}"
-    # proxy       "${socks5_proxy}"
-)
-
-# zlib
-include("${custom_module}/packages/zlib/zlib.cmake")
-add_zlib(
-    name    "zlib-1.3.1"
-    version "1.3.1"
-    prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
-    "-DZLIB_BUILD_EXAMPLES=OFF"
+    proxy       "${socks5_proxy}"
 )
 
 # bzip2

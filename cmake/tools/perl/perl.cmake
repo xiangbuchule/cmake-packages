@@ -53,9 +53,13 @@ function(add_perl)
         return()
     endif()
     # set build path
+    set(perl_tmp        "${CMAKE_CURRENT_BINARY_DIR}/${target_name}-prefix")
     set(perl_download   "${perl_prefix}/cache/download")
     set(perl_source     "${perl_prefix}/cache/tool/${perl_name}")
     set(perl_patch      "${perl_prefix}/cache/patch/${perl_name}")
+    if(NOT EXISTS "${perl_tmp}" OR NOT IS_DIRECTORY "${perl_tmp}")
+        file(MAKE_DIRECTORY "${perl_tmp}")
+    endif()
     if(NOT EXISTS "${perl_download}" OR NOT IS_DIRECTORY "${perl_download}")
         file(MAKE_DIRECTORY "${perl_download}")
     endif()
@@ -83,9 +87,9 @@ function(add_perl)
         COMMENT "Download Perl '${perl_url}' ===> '${perl_download}/${perl_file}' ..."
     )
     add_custom_command(
-        OUTPUT "${perl_source}/touch"
+        OUTPUT "${perl_tmp}/touch"
         COMMAND "${CMAKE_COMMAND}" -E tar -xf "${perl_download}/${perl_file}"
-        COMMAND "${CMAKE_COMMAND}" -E touch "${perl_source}/touch"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${perl_tmp}/touch"
         WORKING_DIRECTORY "${perl_source}"
         MAIN_DEPENDENCY "${perl_download}/${perl_file}"
         USES_TERMINAL
@@ -94,7 +98,7 @@ function(add_perl)
     # set target
     add_custom_target(
         "${target_name}"
-        DEPENDS "${perl_source}/touch"
+        DEPENDS "${perl_tmp}/touch"
         WORKING_DIRECTORY "${perl_patch}"
         COMMENT "Build '${perl_name}' In '${perl_source}'."
     )
@@ -103,5 +107,5 @@ function(add_perl)
         add_dependencies("${target_name}" ${perl_deps})
     endif()
     # set python path
-    set("${perl_name}-path" "${perl_source}/${perl_name}" PARENT_SCOPE)
+    set("${perl_name}-path" "${perl_source}" PARENT_SCOPE)
 endfunction()

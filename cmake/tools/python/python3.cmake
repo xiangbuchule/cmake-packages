@@ -240,9 +240,13 @@ function(add_python3)
         return()
     endif()
     # set build path
+    set(python3_tmp         "${CMAKE_CURRENT_BINARY_DIR}/${target_name}-prefix")
     set(python3_download    "${python3_prefix}/cache/download")
     set(python3_source      "${python3_prefix}/cache/tool/${python3_name}")
     set(python3_patch       "${python3_prefix}/cache/patch/${python3_name}")
+    if(NOT EXISTS "${python3_tmp}" OR NOT IS_DIRECTORY "${python3_tmp}")
+        file(MAKE_DIRECTORY "${python3_tmp}")
+    endif()
     if(NOT EXISTS "${python3_download}" OR NOT IS_DIRECTORY "${python3_download}")
         file(MAKE_DIRECTORY "${python3_download}")
     endif()
@@ -297,11 +301,11 @@ function(add_python3)
         USES_TERMINAL
     )
     add_custom_command(
-        OUTPUT "${python3_patch}/python_extracted"
+        OUTPUT "${python3_tmp}/extracted"
         COMMAND "${CMAKE_COMMAND}" -E tar -xf "${python3_download}/${python3_file}"
-        COMMAND "${CMAKE_COMMAND}" -E touch "${python3_patch}/python_extracted"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${python3_tmp}/extracted"
         WORKING_DIRECTORY "${python3_source}"
-        MAIN_DEPENDENCY "${python3_download}/${python3_file}"
+        DEPENDS "${python3_download}/${python3_file}" "${python3_download}/${python3_pip_file}"
         USES_TERMINAL
         COMMENT "Extract Python '${python3_download}/${python3_file}' ===> '${python3_source}' ..."
     )
@@ -314,11 +318,11 @@ function(add_python3)
         OUTPUT "${pip_config_file}"
         COMMAND "${CMAKE_COMMAND}" -P "${python3_patch_install_pip_script_file}"
         WORKING_DIRECTORY "${python3_source}"
-        MAIN_DEPENDENCY "${python3_patch}/python_extracted"
+        MAIN_DEPENDENCY "${python3_tmp}/extracted"
         USES_TERMINAL
         COMMENT "Install Pip '${python3_download}/${python3_pip_file}' ===> '${python3_source}' ..."
     )
-    set(pkgs_info_file "${python3_patch}/pkgs")
+    set(pkgs_info_file "${python3_tmp}/pkgs")
     if((NOT EXISTS "${pkgs_info_file}") OR IS_DIRECTORY "${pkgs_info_file}")
         if("" STREQUAL "${pkgs_tmp}")
             file(TOUCH "${pkgs_info_file}")
@@ -332,9 +336,9 @@ function(add_python3)
         endif()
     endif()
     add_custom_command(
-        OUTPUT "${python3_patch}/pkgs_installed"
+        OUTPUT "${python3_tmp}/pkgs_installed"
         COMMAND "${CMAKE_COMMAND}" -P "${python3_patch_install_pkgs_script}"
-        COMMAND "${CMAKE_COMMAND}" -E touch "${python3_patch}/pkgs_installed"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${python3_tmp}/pkgs_installed"
         WORKING_DIRECTORY "${python3_source}"
         DEPENDS "${pkgs_info_file}" "${pip_config_file}"
         USES_TERMINAL
@@ -344,8 +348,8 @@ function(add_python3)
     add_custom_target(
         "${target_name}"
         WORKING_DIRECTORY "${python3_source}"
-        DEPENDS "${python3_patch}/pkgs_installed"
-        COMMENT "Build '${python3_name}'."
+        DEPENDS "${python3_tmp}/pkgs_installed"
+        COMMENT "Build '${python3_name}' In '${python3_source}'."
     )
     # add deps
     if(NOT ("${python3_deps}" STREQUAL ""))
