@@ -17,49 +17,44 @@ App::App(int width, int height, bool open, std::shared_ptr<GLFWwindow> window)
 App::~App() {}
 
 void App::render() {
-    static bool               p_open          = true;
-    static bool               opt_fullscreen  = true;
-    static bool               opt_padding     = false;
-    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar;
     ImGuiWindowFlags          window_flags    = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-    if (opt_fullscreen) {
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-        ImGui::SetNextWindowViewport(viewport->ID);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-    } else {
-        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-    }
+    const ImGuiViewport      *viewport        = ImGui::GetMainViewport();
+    ImGuiIO                  &io              = ImGui::GetIO();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         window_flags |= ImGuiWindowFlags_NoBackground;
-    if (!opt_padding) ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin("DockSpace", &p_open, window_flags);
-    if (!opt_padding)
-        ImGui::PopStyleVar();
-    if (opt_fullscreen)
-        ImGui::PopStyleVar(2);
-    ImGuiID dockspace_id;
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) {
-        dockspace_id = ImGui::GetID("DockSpace");
-        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags | ImGuiDockNodeFlags_AutoHideTabBar);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace", nullptr, window_flags);
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+        auto dockspace_id = ImGui::GetID("DockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        static bool first_dock = true;
+        if (first_dock) {
+            first_dock = false;
+            ImGui::DockBuilderRemoveNode(dockspace_id);
+            ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+            ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+            auto remain_dockspace = dockspace_id;
+            auto dock_id_left     = ImGui::DockBuilderSplitNode(remain_dockspace, ImGuiDir_Left, 0.5f, nullptr, &remain_dockspace);
+            ImGui::DockBuilderDockWindow("option", dock_id_left);
+            ImGui::DockBuilderDockWindow("mmp", remain_dockspace);
+            ImGui::DockBuilderFinish(dockspace_id);
+        }
     }
     ImGui::End();
-        ImGui::DockBuilderRemoveNode(dockspace_id);
-        ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
-        ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
-        auto dock_id_left  = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.5f, nullptr, &dockspace_id);
-        auto dock_id_right = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 1.f, nullptr, &dockspace_id);
-        ImGui::DockBuilderDockWindow("xyz", dock_id_left);
-        ImGui::DockBuilderDockWindow("mmp", dockspace_id);
-        ImGui::DockBuilderFinish(dockspace_id);
-        ImGui::Begin("xyz");
-        ImGui::Text("看来是就过分了");
-        ImGui::End();
-        ImGui::Begin("mmp");
-        ImGui::Text("李开复倒过来看");
-        ImGui::End();
+    ImGui::Begin("option");
+    ImGui::Text("看来是就过分了");
+    ImGui::End();
+    ImGui::Begin("mmp");
+    ImGui::Text("李开复倒过来看");
+    ImGui::End();
 }

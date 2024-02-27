@@ -15,8 +15,9 @@ function(add_imgui)
     # set pkg name
     set(pkg_name "pkg-${imgui_name}")
     set(imgui_repository_url            "https://github.com/ocornut/imgui")
-    list(APPEND imgui_version_list      "1.90.3" "1.90.3-docking" "1.90.2" "1.90.2-docking")
-    list(APPEND imgui_hash_list         "e6056a61301eaacb269a7302b55fd9b78a5b47ebc43bfb0aafa9bc9fd265fc4a"
+    list(APPEND imgui_version_list      "1.90.4-docking" "1.90.3" "1.90.3-docking" "1.90.2" "1.90.2-docking")
+    list(APPEND imgui_hash_list         "3b3febe20fc80761fba058a459714d197fc99e04a70855b7e51c5b7677f76e91"
+                                        "e6056a61301eaacb269a7302b55fd9b78a5b47ebc43bfb0aafa9bc9fd265fc4a"
                                         "8d82ea44daa778cc888c8423c0baef7d312ac539dc1ad92d8256c38e1d9a562b"
                                         "75f5f0a8fb9942eb9f388c7e352c54a0b3076edf137944a0d0711bff20082390"
                                         "688e50a9e3068a70df92596415bbcd2ec675168986cd7a67432597b125ff9f26")

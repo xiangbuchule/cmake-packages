@@ -61,7 +61,7 @@ add_executable(${PROJECT_NAME} ${source_file})
 add_dependencies(
     ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
                     bzip2-master libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
-                    freetype2-2.13.2 imgui-1.90.3-docking-glfw-opengl3
+                    freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
                     mysql-connector-cpp-8.0.33
 )
 # 目标include
@@ -82,17 +82,17 @@ target_include_directories(
 # 声明一下源文件是被生成的
 # 防止generate阶段报错找不到源文件
 add_custom_command(
-    OUTPUT  ${imgui-1.90.3-docking-glfw-opengl3-sources}
+    OUTPUT  ${imgui-1.90.4-docking-glfw-opengl3-sources}
     COMMAND echo some source files will be created
     USES_TERMINAL ON
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.3-docking-glfw-opengl3-sources}
+    # COMMAND "${CMAKE_COMMAND}" -E touch ${imgui-1.90.4-docking-glfw-opengl3-sources}
 )
 # 目标链接项
 target_link_libraries(
     ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
                     libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
-                    freetype2-2.13.2 imgui-1.90.3-docking-glfw-opengl3
+                    freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
                     mysql-connector-cpp-8.0.33
 )
 target_compile_definitions(

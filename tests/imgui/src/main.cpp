@@ -58,6 +58,11 @@ int main() {
     (&icon_array[1])->pixels = stbi_load_from_memory(icon_32x32.get(), (int)icon_32x32_len * (int)sizeof(icon_32x32[0]), &(&icon_array[1])->width, &(&icon_array[1])->height, NULL, 0);
     (&icon_array[2])->pixels = stbi_load_from_memory(icon_48x48.get(), (int)icon_48x48_len * (int)sizeof(icon_48x48[0]), &(&icon_array[2])->width, &(&icon_array[2])->height, NULL, 0);
     glfwSetWindowIcon(window.get(), 3, icon_array.get());
+    // 回收图标内存
+    stbi_image_free((&icon_array[0])->pixels);
+    stbi_image_free((&icon_array[1])->pixels);
+    stbi_image_free((&icon_array[2])->pixels);
+    icon_array.reset();
     // 设置当前窗口为glfw的context上下文
     glfwMakeContextCurrent(window.get());
     glfwSetKeyCallback(window.get(), input_key_callback);
@@ -96,11 +101,6 @@ int main() {
         // swap buffer
         glfwSwapBuffers(window.get());
     }
-    // 回收图标内存
-    stbi_image_free((&icon_array[0])->pixels);
-    stbi_image_free((&icon_array[1])->pixels);
-    stbi_image_free((&icon_array[2])->pixels);
-    icon_array.reset();
     // 回收资源
     release();
     return 0;
