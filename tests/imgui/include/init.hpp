@@ -1,5 +1,5 @@
-#ifndef __INIT__
-#define __INIT__
+#ifndef __INIT_HPP__
+#define __INIT_HPP__
 
 #include <concepts>
 #include <exception>
@@ -14,8 +14,13 @@
 #include "GLFW/glfw3.h"
 
 #include "imgui.h"
+#include "imgui_freetype.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+
+extern "C" {
+#include "rc.h"
+}
 
 // create zip object by zip byte array
 auto get_zip_object(const char *data, size_t size) {
@@ -55,17 +60,44 @@ void init() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
+    // RC
+    auto [archive, source] = get_zip_object(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]));
+    // fonts
+    auto [hack_font_ptr, hack_font_len]                             = read_zip_file_content<unsigned char>(archive, "fonts/Nerd-Font-Hack/HackNerdFont-Regular.ttf");
+    auto [simplified_chinese_font_ptr, simplified_chinese_font_len] = read_zip_file_content<unsigned char>(archive, "fonts/Source-Han-Sans/SimplifiedChinese-VF.ttf");
     // imgui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    // style
+    ImGui::StyleColorsLight();
+    // ImGui::StyleColorsClassic();
+    // ImGui::StyleColorsDark();
+    // config
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // enable docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // 开启多视口
+    io.ConfigViewportsNoAutoMerge = true;
+    // ban imgui.ini
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+    // fonts
+    io.Fonts->AddFontDefault();
+    ImFontConfig font_cfg;
+    font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_ForceAutoHint; // 表示优先使用自动hinting而不是字体的本机hinting
+    // font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_Bold;          // 加粗字体
+    font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_LoadColor; // 启用FreeType颜色分层字形
+    font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_Bitmap;    // 启用FreeType位图字形
+    font_cfg.FontDataOwnedByAtlas = false;
+    font_cfg.MergeMode            = true;
+    io.Fonts->AddFontFromMemoryTTF((void *)hack_font_ptr.get(), (int)hack_font_len, 13., &font_cfg, io.Fonts->GetGlyphRangesDefault());
+    io.Fonts->AddFontFromMemoryTTF((void *)simplified_chinese_font_ptr.get(), (int)simplified_chinese_font_len, 13., &font_cfg, io.Fonts->GetGlyphRangesChineseFull());
+    io.Fonts->Build();
 }
 
 // free

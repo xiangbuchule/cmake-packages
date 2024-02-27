@@ -89,24 +89,25 @@ function(replace_cmake_args replace_list source_list)
 endfunction()
 
 # guess target file name
+#   name:       binary name
+#   lib_prefix: lib prefix name
+#   lib_suffix: lib suffix name
+#   bin_prefix: bin prefix name
+#   bin_suffix: bin suffix name
 function(guess_binary_file)
     # params
-    cmake_parse_arguments(file "" "name;prefix;remove_prefix;suffix;remove_suffix" "" ${ARGN})
+    cmake_parse_arguments(file "" "name;lib_prefix;lib_suffix;bin_prefix;bin_suffix" "" ${ARGN})
+    # set default
     if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
         if(MSVC)
-            set(lib_file_default_extension ".lib")
-            set(lib_file_default_prefix "")
-            set(lib_file_default_suffix "")
-            set(bin_file_default_extension ".dll")
-            set(bin_file_default_prefix "")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".lib")
+            set(bin_extension ".dll")
         elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            set(lib_file_default_extension ".a")
-            set(lib_file_default_prefix "lib")
-            set(lib_file_default_suffix ".dll")
-            set(bin_file_default_extension ".dll")
-            set(bin_file_default_prefix "lib")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".a")
+            set(lib_prefix "lib")
+            set(lib_suffix ".dll")
+            set(bin_extension ".dll")
+            set(bin_prefix "lib")
         elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
             message(FATAL_ERROR "TODO Setting ...")
         else()
@@ -114,32 +115,31 @@ function(guess_binary_file)
         endif()
     elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
         if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            set(lib_file_default_extension ".a")
-            set(lib_file_default_prefix "lib")
-            set(lib_file_default_suffix "")
-            set(bin_file_default_extension "so")
-            set(bin_file_default_prefix "lib")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".a")
+            set(lib_prefix "lib")
+            set(bin_extension ".so")
+            set(lib_prefix "lib")
         endif()
     elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
         message(FATAL_ERROR "TODO Setting ...")
     else()
         message(FATAL_ERROR "TODO Setting ...")
     endif()
-    set(lib_file_default_prefix "${file_prefix}")
-    set(lib_file_default_suffix "${file_suffix}")
-    set(bin_file_default_prefix "${file_prefix}")
-    set(bin_file_default_suffix "${file_suffix}")
-    if(file_remove_prefix)
-        set(lib_file_default_prefix "")
-        set(bin_file_default_prefix "")
+    # set prefix/suffix
+    if(NOT ("${lib_prefix}" STREQUAL "${file_lib_prefix}"))
+        set(lib_prefix "${file_lib_prefix}")
     endif()
-    if(file_remove_suffix)
-        set(lib_file_default_suffix "")
-        set(bin_file_default_suffix "")
+    if(NOT ("${lib_suffix}" STREQUAL "${file_lib_suffix}"))
+        set(lib_suffix "${file_lib_suffix}")
     endif()
-    set("${file_name}_lib" "${file_prefix}${file_name}${file_suffix}${lib_file_default_extension}" PARENT_SCOPE)
-    set("${file_name}_bin" "${file_prefix}${file_name}${file_suffix}${bin_file_default_extension}" PARENT_SCOPE)
+    if(NOT ("${bin_prefix}" STREQUAL "${file_bin_prefix}"))
+        set(bin_prefix "${file_bin_prefix}")
+    endif()
+    if(NOT ("${bin_suffix}" STREQUAL "${file_bin_suffix}"))
+        set(bin_suffix "${file_bin_suffix}")
+    endif()
+    set("${file_name}_lib" "${lib_prefix}${file_name}${lib_suffix}${lib_extension}" PARENT_SCOPE)
+    set("${file_name}_bin" "${bin_prefix}${file_name}${bin_suffix}${bin_extension}" PARENT_SCOPE)
 endfunction()
 
 # name:     target name
@@ -253,131 +253,51 @@ function(add_boost)
         DEPENDERS "patch"
         USES_TERMINAL ON
     )
-    # check is build shared/static
-    if(boost_build_shared)
-        add_library("${boost_name}" SHARED IMPORTED GLOBAL)
-    else()
-        add_library("${boost_name}" STATIC IMPORTED GLOBAL)
-    endif()
-    add_dependencies("${boost_name}" "${pkg_name}")
     # set lib path dir
     string(REPLACE "." ";" tmp_version "${boost_version}")
     list(LENGTH tmp_version tmp_version_len)
     math(EXPR tmp_version_len "${tmp_version_len} - 1")
     list(REMOVE_AT tmp_version ${tmp_version_len})
     list(JOIN tmp_version "_" tmp_version)
-    set("${boost_name}-includes"    "${boost_install}/include/boost-${tmp_version}"         PARENT_SCOPE)
-    set("${boost_name}-cmake"       "${boost_install}/lib/cmake"                            PARENT_SCOPE)
-    set("${boost_name}-root"        "${boost_install}"                                      PARENT_SCOPE)
+    set("${boost_name}-includes"    "${boost_install}/include/boost-${tmp_version}" PARENT_SCOPE)
+    set("${boost_name}-cmake"       "${boost_install}/lib/cmake"                    PARENT_SCOPE)
+    set("${boost_name}-root"        "${boost_install}"                              PARENT_SCOPE)
+    set("${boost_name}-source"      "${boost_source}"                               PARENT_SCOPE)
     set(lib_path "${boost_install}/lib")
     set(bin_path "${boost_install}/lib")
     if(MSVC)
         set(name_suffix "-vc${MSVC_TOOLSET_VERSION}-mt-gd-${CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE}-${tmp_version}")
     endif()
-    guess_binary_file(name "boost_atomic"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_chrono"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_cobalt"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_container"                suffix "${name_suffix}")
-    guess_binary_file(name "boost_context"                  suffix "${name_suffix}")
-    guess_binary_file(name "boost_contract"                 suffix "${name_suffix}")
-    guess_binary_file(name "boost_coroutine"                suffix "${name_suffix}")
-    guess_binary_file(name "boost_date_time"                suffix "${name_suffix}")
-    guess_binary_file(name "boost_fiber"                    suffix "${name_suffix}")
-    guess_binary_file(name "boost_fiber_numa"               suffix "${name_suffix}")
-    guess_binary_file(name "boost_filesystem"               suffix "${name_suffix}")
-    guess_binary_file(name "boost_graph"                    suffix "${name_suffix}")
-    guess_binary_file(name "boost_iostreams"                suffix "${name_suffix}")
-    guess_binary_file(name "boost_json"                     suffix "${name_suffix}")
-    guess_binary_file(name "boost_locale"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_log"                      suffix "${name_suffix}")
-    guess_binary_file(name "boost_log_setup"                suffix "${name_suffix}")
-    guess_binary_file(name "boost_nowide"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_prg_exec_monitor"         suffix "${name_suffix}")
-    guess_binary_file(name "boost_program_options"          suffix "${name_suffix}")
-    guess_binary_file(name "boost_random"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_serialization"            suffix "${name_suffix}")
-    guess_binary_file(name "boost_stacktrace_basic"         suffix "${name_suffix}")
-    guess_binary_file(name "boost_stacktrace_noop"          suffix "${name_suffix}")
-    guess_binary_file(name "boost_stacktrace_windbg"        suffix "${name_suffix}")
-    guess_binary_file(name "boost_stacktrace_windbg_cached" suffix "${name_suffix}")
-    guess_binary_file(name "boost_thread"                   suffix "${name_suffix}")
-    guess_binary_file(name "boost_timer"                    suffix "${name_suffix}")
-    guess_binary_file(name "boost_type_erasure"             suffix "${name_suffix}")
-    guess_binary_file(name "boost_unit_test_framework"      suffix "${name_suffix}")
-    guess_binary_file(name "boost_url"                      suffix "${name_suffix}")
-    guess_binary_file(name "boost_wave"                     suffix "${name_suffix}")
-    guess_binary_file(name "boost_wserialization"           suffix "${name_suffix}")
-    set(lib_list    "${lib_path}/${boost_atomic_lib}"
-                    "${lib_path}/${boost_chrono_lib}"
-                    "${lib_path}/${boost_cobalt_lib}"
-                    "${lib_path}/${boost_container_lib}"
-                    "${lib_path}/${boost_context_lib}"
-                    "${lib_path}/${boost_contract_lib}"
-                    "${lib_path}/${boost_coroutine_lib}"
-                    "${lib_path}/${boost_date_time_lib}"
-                    "${lib_path}/${boost_fiber_lib}"
-                    "${lib_path}/${boost_fiber_numa_lib}"
-                    "${lib_path}/${boost_filesystem_lib}"
-                    "${lib_path}/${boost_graph_lib}"
-                    "${lib_path}/${boost_iostreams_lib}"
-                    "${lib_path}/${boost_json_lib}"
-                    "${lib_path}/${boost_locale_lib}"
-                    "${lib_path}/${boost_log_lib}"
-                    "${lib_path}/${boost_log_setup_lib}"
-                    "${lib_path}/${boost_nowide_lib}"
-                    "${lib_path}/${boost_prg_exec_monitor_lib}"
-                    "${lib_path}/${boost_program_options_lib}"
-                    "${lib_path}/${boost_random_lib}"
-                    "${lib_path}/${boost_serialization_lib}"
-                    "${lib_path}/${boost_stacktrace_basic_lib}"
-                    "${lib_path}/${boost_stacktrace_noop_lib}"
-                    "${lib_path}/${boost_stacktrace_windbg_lib}"
-                    "${lib_path}/${boost_stacktrace_windbg_cached_lib}"
-                    "${lib_path}/${boost_thread_lib}"
-                    "${lib_path}/${boost_timer_lib}"
-                    "${lib_path}/${boost_type_erasure_lib}"
-                    "${lib_path}/${boost_unit_test_framework_lib}"
-                    "${lib_path}/${boost_url_lib}"
-                    "${lib_path}/${boost_wave_lib}"
-                    "${lib_path}/${boost_wserialization_lib}")
-    set(bin_list    "${bin_path}/${boost_atomic_bin}"
-                    "${bin_path}/${boost_chrono_bin}"
-                    "${bin_path}/${boost_cobalt_bin}"
-                    "${bin_path}/${boost_container_bin}"
-                    "${bin_path}/${boost_context_bin}"
-                    "${bin_path}/${boost_contract_bin}"
-                    "${bin_path}/${boost_coroutine_bin}"
-                    "${bin_path}/${boost_date_time_bin}"
-                    "${bin_path}/${boost_fiber_bin}"
-                    "${bin_path}/${boost_fiber_numa_bin}"
-                    "${bin_path}/${boost_filesystem_bin}"
-                    "${bin_path}/${boost_graph_bin}"
-                    "${bin_path}/${boost_iostreams_bin}"
-                    "${bin_path}/${boost_json_bin}"
-                    "${bin_path}/${boost_locale_bin}"
-                    "${bin_path}/${boost_log_bin}"
-                    "${bin_path}/${boost_log_setup_bin}"
-                    "${bin_path}/${boost_nowide_bin}"
-                    "${bin_path}/${boost_prg_exec_monitor_bin}"
-                    "${bin_path}/${boost_program_options_bin}"
-                    "${bin_path}/${boost_random_bin}"
-                    "${bin_path}/${boost_serialization_bin}"
-                    "${bin_path}/${boost_stacktrace_basic_bin}"
-                    "${bin_path}/${boost_stacktrace_noop_bin}"
-                    "${bin_path}/${boost_stacktrace_windbg_bin}"
-                    "${bin_path}/${boost_stacktrace_windbg_cached_bin}"
-                    "${bin_path}/${boost_thread_bin}"
-                    "${bin_path}/${boost_timer_bin}"
-                    "${bin_path}/${boost_type_erasure_bin}"
-                    "${bin_path}/${boost_unit_test_framework_bin}"
-                    "${bin_path}/${boost_url_bin}"
-                    "${bin_path}/${boost_wave_bin}"
-                    "${bin_path}/${boost_wserialization_bin}")
-    guess_binary_file(name "libboost_exception"         suffix "${name_suffix}")
-    guess_binary_file(name "libboost_test_exec_monitor" suffix "${name_suffix}")
-    list(APPEND lib_list "${lib_path}/${libboost_exception_lib}" "${lib_path}/${libboost_test_exec_monitor_lib}")
-    set_target_properties("${boost_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${boost_atomic_lib}")
-    if(boost_build_shared)
-        set_target_properties("${boost_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${boost_atomic_bin}")
-    endif()
+    # set binary list
+    set(binary_list "atomic" "chrono" "cobalt" "container" "context"
+                    "contract" "coroutine" "date_time" "fiber"
+                    "fiber_numa" "filesystem" "graph" "iostreams"
+                    "json" "locale" "log" "log_setup" "nowide"
+                    "prg_exec_monitor" "program_options" "random" "serialization"
+                    "stacktrace_basic" "stacktrace_noop" "stacktrace_windbg"
+                    "stacktrace_windbg_cached" "thread" "timer" "type_erasure"
+                    "unit_test_framework" "url" "wave" "wserialization"
+                    "exception" "test_exec_monitor")
+    # set target
+    foreach(item IN LISTS binary_list)
+        string(REGEX REPLACE "_" "-" binary_name "${item}")
+        # check is build shared/static
+        if(boost_build_shared)
+            add_library("${boost_name}::${binary_name}" SHARED IMPORTED GLOBAL)
+        else()
+            add_library("${boost_name}::${binary_name}" STATIC IMPORTED GLOBAL)
+        endif()
+        add_dependencies("${boost_name}::${binary_name}" "${pkg_name}")
+        # guess file
+        if("${item}" STREQUAL "exception" OR "${item}" STREQUAL "test_exec_monitor")
+            guess_binary_file(name "boost_${item}" lib_prefix "lib" bin_prefix "lib" lib_suffix "${name_suffix}" bin_suffix "${name_suffix}")
+        else()
+            guess_binary_file(name "boost_${item}" lib_suffix "${name_suffix}" bin_suffix "${name_suffix}")
+        endif()
+        # add library
+        set_target_properties("${boost_name}::${binary_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${boost_${item}_lib}")
+        if(boost_build_shared)
+            set_target_properties("${boost_name}::${binary_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${boost_${item}_bin}")
+        endif()
+    endforeach()
 endfunction()

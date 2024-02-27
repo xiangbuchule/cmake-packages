@@ -64,17 +64,6 @@ add_zlib(
     "-DZLIB_BUILD_EXAMPLES=OFF"
 )
 
-# openssl3
-include("${custom_module}/packages/openssl/openssl3.cmake")
-add_openssl3(
-    name    "openssl3-3.2.1"
-    prefix  "${third_path}"
-    version "3.2.1"
-    nasm    "${nasm-2.16.01-path}"
-    perl    "${perl-5.36.1.1-path}"
-    # proxy   "${socks5_proxy}"
-    deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
-)
 # openssl1
 include("${custom_module}/packages/openssl/openssl1.cmake")
 get_target_property(zlib-lib zlib-1.3.1 IMPORTED_IMPLIB)
@@ -89,6 +78,17 @@ add_openssl1(
     options     "no-tests" "zlib" "zlib-dynamic"
                 "--with-zlib-lib=${zlib-lib}"
                 "--with-zlib-include=${zlib-1.3.1-root}/include"
+)
+# openssl3
+include("${custom_module}/packages/openssl/openssl3.cmake")
+add_openssl3(
+    name    "openssl3-3.2.1"
+    prefix  "${third_path}"
+    version "3.2.1"
+    nasm    "${nasm-2.16.01-path}"
+    perl    "${perl-5.36.1.1-path}"
+    # proxy   "${socks5_proxy}"
+    deps    "tool-nasm-2.16.01" "tool-perl-5.36.1.1"
 )
 
 # boost
@@ -190,7 +190,6 @@ add_mysql_connector_c(
     name    "mysql-connector-c-6.1.11"
     version "6.1.11"
     prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
 )
 
 # mysql-connecter-cpp
@@ -200,7 +199,7 @@ add_mysql_connector_cpp(
     version "8.0.33"
     deps    "pkg-openssl1-1.1.1w"
     prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     "-DWITH_SSL=${openssl1-1.1.1w-root}"
 )
 

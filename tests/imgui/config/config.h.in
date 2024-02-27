@@ -1,13 +1,4 @@
 #ifndef __CONFIG__
 #define __CONFIG__
 
-// glfw config
-#define GLFW_INCLUDE_NONE
-
-// imgui config
-#define IMGUI_ENABLE_FREETYPE
-
-// stb config
-#define STB_IMAGE_IMPLEMENTATION
-
 #endif

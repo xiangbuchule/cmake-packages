@@ -1,5 +1,26 @@
 include(ExternalProject)
 
+# install mysql script
+# script:   script file save path
+# source:   source dir
+function(mysql_connector_c_patch_script)
+    # params
+    cmake_parse_arguments(mysql "" "script;source" "" ${ARGN})
+    # set params
+    set(script_content "\
+# set perl/nasm info
+set(source \"${mysql_source}\")
+")
+    # set other script
+    string(APPEND script_content [[
+# write Configure content
+file(READ "${source}/cmake/install_macros.cmake" old_content)
+string(REPLACE "        OPTIONAL)\n    ENDIF()\n  ENDFOREACH()" "        OPTIONAL)\n    ENDFOREACH()\n  ENDIF()" new_content "${old_content}")
+file(WRITE "${source}/cmake/install_macros.cmake" "${new_content}")
+]])
+    file(WRITE "${mysql_script}" "${script_content}")
+endfunction()
+
 # check and get cmake args params
 # parameter:    check cmake parameter
 # default:      default value
@@ -89,24 +110,25 @@ function(replace_cmake_args replace_list source_list)
 endfunction()
 
 # guess target file name
+#   name:       binary name
+#   lib_prefix: lib prefix name
+#   lib_suffix: lib suffix name
+#   bin_prefix: bin prefix name
+#   bin_suffix: bin suffix name
 function(guess_binary_file)
     # params
-    cmake_parse_arguments(file "" "name;prefix;remove_prefix;suffix;remove_suffix" "" ${ARGN})
+    cmake_parse_arguments(file "" "name;lib_prefix;lib_suffix;bin_prefix;bin_suffix" "" ${ARGN})
+    # set default
     if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
         if(MSVC)
-            set(lib_file_default_extension ".lib")
-            set(lib_file_default_prefix "")
-            set(lib_file_default_suffix "")
-            set(bin_file_default_extension ".dll")
-            set(bin_file_default_prefix "")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".lib")
+            set(bin_extension ".dll")
         elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            set(lib_file_default_extension ".a")
-            set(lib_file_default_prefix "lib")
-            set(lib_file_default_suffix ".dll")
-            set(bin_file_default_extension ".dll")
-            set(bin_file_default_prefix "lib")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".a")
+            set(lib_prefix "lib")
+            set(lib_suffix ".dll")
+            set(bin_extension ".dll")
+            set(bin_prefix "lib")
         elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
             message(FATAL_ERROR "TODO Setting ...")
         else()
@@ -114,32 +136,31 @@ function(guess_binary_file)
         endif()
     elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
         if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            set(lib_file_default_extension ".a")
-            set(lib_file_default_prefix "lib")
-            set(lib_file_default_suffix "")
-            set(bin_file_default_extension "so")
-            set(bin_file_default_prefix "lib")
-            set(bin_file_default_suffix "")
+            set(lib_extension ".a")
+            set(lib_prefix "lib")
+            set(bin_extension ".so")
+            set(lib_prefix "lib")
         endif()
     elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
         message(FATAL_ERROR "TODO Setting ...")
     else()
         message(FATAL_ERROR "TODO Setting ...")
     endif()
-    set(lib_file_default_prefix "${file_prefix}")
-    set(lib_file_default_suffix "${file_suffix}")
-    set(bin_file_default_prefix "${file_prefix}")
-    set(bin_file_default_suffix "${file_suffix}")
-    if(file_remove_prefix)
-        set(lib_file_default_prefix "")
-        set(bin_file_default_prefix "")
+    # set prefix/suffix
+    if(NOT ("${lib_prefix}" STREQUAL "${file_lib_prefix}"))
+        set(lib_prefix "${file_lib_prefix}")
     endif()
-    if(file_remove_suffix)
-        set(lib_file_default_suffix "")
-        set(bin_file_default_suffix "")
+    if(NOT ("${lib_suffix}" STREQUAL "${file_lib_suffix}"))
+        set(lib_suffix "${file_lib_suffix}")
     endif()
-    set("${file_name}_lib" "${file_prefix}${file_name}${file_suffix}${lib_file_default_extension}" PARENT_SCOPE)
-    set("${file_name}_bin" "${file_prefix}${file_name}${file_suffix}${bin_file_default_extension}" PARENT_SCOPE)
+    if(NOT ("${bin_prefix}" STREQUAL "${file_bin_prefix}"))
+        set(bin_prefix "${file_bin_prefix}")
+    endif()
+    if(NOT ("${bin_suffix}" STREQUAL "${file_bin_suffix}"))
+        set(bin_suffix "${file_bin_suffix}")
+    endif()
+    set("${file_name}_lib" "${lib_prefix}${file_name}${lib_suffix}${lib_extension}" PARENT_SCOPE)
+    set("${file_name}_bin" "${bin_prefix}${file_name}${bin_suffix}${bin_extension}" PARENT_SCOPE)
 endfunction()
 
 # name:     target name
@@ -185,6 +206,7 @@ function(add_mysql_connector_c)
     set(mysql_install   "${mysql_prefix}/cache/install/${mysql_name}/${mysql_build_type}")
     set(mysql_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(mysql_source    "${mysql_prefix}/${mysql_name}")
+    set(mysql_patch     "${mysql_prefix}/cache/patch/${mysql_name}")
     if(MSVC)
         set(mysql_binary "${mysql_prefix}/cache/bin/${mysql_name}")
     else()
@@ -215,6 +237,9 @@ function(add_mysql_connector_c)
                             "-DCMAKE_CXX_FLAGS_RELEASE='${CMAKE_CXX_FLAGS_RELEASE}'")
     # add other build args
     replace_cmake_args("mysql_UNPARSED_ARGUMENTS" "mysql_cmake_options")
+    # patch
+    mysql_connector_c_patch_script(script "${mysql_patch}/patch.cmake" source "${mysql_source}")
+    set(mysql_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql_patch}/patch.cmake")
     # is install
     if(MSVC)
         set(mysql_build_cmd BUILD_COMMAND COMMAND "${CMAKE_COMMAND}" --build "${mysql_build}" --config "${mysql_build_type}")
@@ -240,9 +265,10 @@ function(add_mysql_connector_c)
     set("${mysql_name}-root"        "${mysql_install}"                  PARENT_SCOPE)
     set(lib_path "${mysql_install}/lib")
     set(bin_path "${mysql_install}/lib")
-    guess_binary_file(name "bz2")
-    set_target_properties("${mysql_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${bz2_lib}")
+    guess_binary_file(name "mysql" lib_prefix "lib" bin_prefix "lib")
+    guess_binary_file(name "mysqlclient")
+    set_target_properties("${mysql_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${mysql_lib};${lib_path}/${mysqlclient_lib}")
     if(mysql_build_shared)
-        set_target_properties("${mysql_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${bz2_bin}")
+        set_target_properties("${mysql_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${mysql_bin}")
     endif()
 endfunction()

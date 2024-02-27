@@ -3,8 +3,6 @@
 #include <memory>
 #include <string>
 
-#include "config.h"
-
 #include "glad/gl.h"
 
 #include "GLFW/glfw3.h"
@@ -22,7 +20,9 @@ extern "C" {
 #include "rc.h"
 }
 
+#include "global.hpp"
 #include "init.hpp"
+#include "ui/app.h"
 
 void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint action, GLint mods);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -43,25 +43,21 @@ int main() {
     archive.reset();
     source.reset();
     // create window
-    std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow * ptr)>> window(glfwCreateWindow(800, 600, "glfw window", NULL, NULL), [](GLFWwindow *ptr) { glfwDestroyWindow(ptr); });
+    // std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow * ptr)>> window(glfwCreateWindow(800, 600, "glfw window", NULL, NULL), [](GLFWwindow *ptr) { glfwDestroyWindow(ptr); });
+    std::shared_ptr<GLFWwindow> window(glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, MAIN_TITLE_NAME, NULL, NULL), [](GLFWwindow *ptr) { glfwDestroyWindow(ptr); });
     if (!window) {
         // 回收资源
         release();
         return 0;
     }
+    // create
+    auto app = std::make_shared<App>(WINDOW_WIDTH, WINDOW_HEIGHT, true, window);
     // glfw支持16x16,32x32和48x48大小的icon
-    auto icon_array          = std::make_unique<GLFWimage[]>(3);
+    auto icon_array          = std::make_shared<GLFWimage[]>(3);
     (&icon_array[0])->pixels = stbi_load_from_memory(icon_16x16.get(), (int)icon_16x16_len * (int)sizeof(icon_16x16[0]), &(&icon_array[0])->width, &(&icon_array[0])->height, NULL, 0);
     (&icon_array[1])->pixels = stbi_load_from_memory(icon_32x32.get(), (int)icon_32x32_len * (int)sizeof(icon_32x32[0]), &(&icon_array[1])->width, &(&icon_array[1])->height, NULL, 0);
     (&icon_array[2])->pixels = stbi_load_from_memory(icon_48x48.get(), (int)icon_48x48_len * (int)sizeof(icon_48x48[0]), &(&icon_array[2])->width, &(&icon_array[2])->height, NULL, 0);
     glfwSetWindowIcon(window.get(), 3, icon_array.get());
-    icon_16x16.reset();
-    icon_32x32.reset();
-    icon_48x48.reset();
-    stbi_image_free((&icon_array[0])->pixels);
-    stbi_image_free((&icon_array[1])->pixels);
-    stbi_image_free((&icon_array[2])->pixels);
-    icon_array.reset();
     // 设置当前窗口为glfw的context上下文
     glfwMakeContextCurrent(window.get());
     glfwSetKeyCallback(window.get(), input_key_callback);
@@ -74,7 +70,7 @@ int main() {
     ImVec4   clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGuiIO &io          = ImGui::GetIO();
     ImGui_ImplGlfw_InitForOpenGL(window.get(), true);
-    ImGui_ImplOpenGL3_Init("#version 460");
+    ImGui_ImplOpenGL3_Init("#version 330");
     // loop
     while (!glfwWindowShouldClose(window.get())) {
         // poll events
@@ -84,7 +80,7 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         // content
-        ImGui::ShowDemoWindow();
+        app->render();
         // render ui
         ImGui::Render();
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
@@ -100,6 +96,11 @@ int main() {
         // swap buffer
         glfwSwapBuffers(window.get());
     }
+    // 回收图标内存
+    stbi_image_free((&icon_array[0])->pixels);
+    stbi_image_free((&icon_array[1])->pixels);
+    stbi_image_free((&icon_array[2])->pixels);
+    icon_array.reset();
     // 回收资源
     release();
     return 0;
@@ -114,5 +115,5 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 void window_size_callback(GLFWwindow *window, int width, int height) {
     // swap buffer
-    glfwSwapBuffers(window);
+    // glfwSwapBuffers(window);
 }
