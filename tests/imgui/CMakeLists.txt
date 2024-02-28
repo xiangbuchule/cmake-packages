@@ -62,7 +62,7 @@ add_dependencies(
     ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
                     bzip2-master libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
                     freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
-                    mysql-connector-cpp-8.0.33
+                    mysql-connector-cpp-8.0.33 rapidjson-1.1.0
 )
 # 目标include
 target_include_directories(
@@ -93,7 +93,7 @@ target_link_libraries(
     ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
                     libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
                     freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
-                    mysql-connector-cpp-8.0.33
+                    mysql-connector-cpp-8.0.33 rapidjson-1.1.0
 )
 target_compile_definitions(
     ${PROJECT_NAME} PRIVATE

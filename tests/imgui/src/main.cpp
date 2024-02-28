@@ -20,9 +20,9 @@ extern "C" {
 #include "rc.h"
 }
 
-#include "global.hpp"
+#include "global.h"
 #include "init.hpp"
-#include "ui/app.h"
+#include "ui/layer.h"
 
 void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint action, GLint mods);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -50,8 +50,6 @@ int main() {
         release();
         return 0;
     }
-    // create
-    auto app = std::make_shared<App>(WINDOW_WIDTH, WINDOW_HEIGHT, true, window);
     // glfw支持16x16,32x32和48x48大小的icon
     auto icon_array          = std::make_shared<GLFWimage[]>(3);
     (&icon_array[0])->pixels = stbi_load_from_memory(icon_16x16.get(), (int)icon_16x16_len * (int)sizeof(icon_16x16[0]), &(&icon_array[0])->width, &(&icon_array[0])->height, NULL, 0);
@@ -73,26 +71,27 @@ int main() {
     // printf("load openGL version %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
     // 绑定imgui
     ImVec4   clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    ImGuiIO &io          = ImGui::GetIO();
     ImGui_ImplGlfw_InitForOpenGL(window.get(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
     // loop
     while (!glfwWindowShouldClose(window.get())) {
         // poll events
         glfwPollEvents();
-        // ui init
+
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        // ================= imgui =================
+        // imgui ui start
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        // content
-        app->render();
-        // render ui
+        // set ui
+        main_render(version);
+        // imgui render
         ImGui::Render();
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         // Update and Render additional Platform Windows
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             GLFWwindow *backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();

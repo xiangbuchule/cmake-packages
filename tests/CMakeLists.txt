@@ -51,11 +51,11 @@ add_perl(
 )
 
 # stdexec
-include("${custom_module}/packages/stdexec/stdexec.cmake")
+include("${custom_module}/packages/base/stdexec/stdexec.cmake")
 add_stdexec(name "stdexec-main" version "main" prefix "${third_path}" proxy "${socks5_proxy}")
 
 # zlib
-include("${custom_module}/packages/zlib/zlib.cmake")
+include("${custom_module}/packages/compress/zlib/zlib.cmake")
 add_zlib(
     name    "zlib-1.3.1"
     version "1.3.1"
@@ -65,7 +65,7 @@ add_zlib(
 )
 
 # openssl1
-include("${custom_module}/packages/openssl/openssl1.cmake")
+include("${custom_module}/packages/encrypt/openssl/openssl1.cmake")
 get_target_property(zlib-lib zlib-1.3.1 IMPORTED_IMPLIB)
 add_openssl1(
     name        "openssl1-1.1.1w"
@@ -80,7 +80,7 @@ add_openssl1(
                 "--with-zlib-include=${zlib-1.3.1-root}/include"
 )
 # openssl3
-include("${custom_module}/packages/openssl/openssl3.cmake")
+include("${custom_module}/packages/encrypt/openssl/openssl3.cmake")
 add_openssl3(
     name    "openssl3-3.2.1"
     prefix  "${third_path}"
@@ -92,7 +92,7 @@ add_openssl3(
 )
 
 # boost
-include("${custom_module}/packages/boost/boost.cmake")
+include("${custom_module}/packages/base/boost/boost.cmake")
 add_boost(
     name        "boost-1.84.0"
     version     "1.84.0"
@@ -101,7 +101,7 @@ add_boost(
 )
 
 # bzip2
-include("${custom_module}/packages/bzip/bzip2.cmake")
+include("${custom_module}/packages/compress/bzip/bzip2.cmake")
 add_bzip2(
     name    "bzip2-master"
     version "master"
@@ -112,7 +112,7 @@ add_bzip2(
 )
 
 # libzip
-include("${custom_module}/packages/libzip/libzip.cmake")
+include("${custom_module}/packages/compress/libzip/libzip.cmake")
 add_libzip(
     name    "libzip-1.10.1"
     version "1.10.1"
@@ -125,7 +125,7 @@ add_libzip(
 )
 
 # freetype2
-include("${custom_module}/packages/freetype/freetype2.cmake")
+include("${custom_module}/packages/asset/freetype/freetype2.cmake")
 add_freetype2(
     name    "freetype2-2.13.2"
     version "2.13.2"
@@ -137,7 +137,7 @@ add_freetype2(
 )
 
 # glfw3
-include("${custom_module}/packages/glfw/glfw3.cmake")
+include("${custom_module}/packages/ui/glfw/glfw3.cmake")
 add_glfw3(
     name    "glfw3-3.3.9"
     prefix  "${third_path}"
@@ -147,7 +147,7 @@ add_glfw3(
 )
 
 # glad2
-include("${custom_module}/packages/glad/glad2.cmake")
+include("${custom_module}/packages/render/glad/glad2.cmake")
 add_glad2(
     name    "glad2-2.0.4-mx"
     version "2.0.4"
@@ -169,11 +169,11 @@ add_glad2(
 )
 
 # stb_image
-include("${custom_module}/packages/stb/stb.cmake")
+include("${custom_module}/packages/asset/stb/stb.cmake")
 add_stb(name "stb-master" version "master" prefix "${third_path}" proxy "${socks5_proxy}")
 
 # imgui
-include("${custom_module}/packages/imgui/imgui.cmake")
+include("${custom_module}/packages/ui/imgui/imgui.cmake")
 add_imgui(
     name        "imgui-1.90.4-docking-glfw-opengl3"
     version     "1.90.4-docking"
@@ -185,7 +185,7 @@ add_imgui(
 )
 
 # mysql-connecter-c
-include("${custom_module}/packages/mysql/mysql-connector-c.cmake")
+include("${custom_module}/packages/database/mysql/mysql-connector-c.cmake")
 add_mysql_connector_c(
     name    "mysql-connector-c-6.1.11"
     version "6.1.11"
@@ -193,7 +193,7 @@ add_mysql_connector_c(
 )
 
 # mysql-connecter-cpp
-include("${custom_module}/packages/mysql/mysql-connector-cpp.cmake")
+include("${custom_module}/packages/database/mysql/mysql-connector-cpp.cmake")
 add_mysql_connector_cpp(
     name    "mysql-connector-cpp-8.0.33"
     version "8.0.33"
@@ -202,6 +202,10 @@ add_mysql_connector_cpp(
     proxy   "${socks5_proxy}"
     "-DWITH_SSL=${openssl1-1.1.1w-root}"
 )
+
+# rapidjson
+include("${custom_module}/packages/serialize/json/rapidjson/rapidjson.cmake")
+add_rapidjson(name "rapidjson-1.1.0" version "1.1.0" prefix "${third_path}" proxy "${socks5_proxy}")
 
 # ==================================================
 # =================== 添加子项目 ===================
