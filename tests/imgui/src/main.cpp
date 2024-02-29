@@ -23,6 +23,7 @@ extern "C" {
 #include "global.h"
 #include "init.hpp"
 #include "ui/layer.h"
+#include "ui/ui.h"
 
 void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint action, GLint mods);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -70,9 +71,17 @@ int main() {
     int version = gladLoadGL((GLADloadfunc)glfwGetProcAddress);
     // printf("load openGL version %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
     // 绑定imgui
-    ImVec4   clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGui_ImplGlfw_InitForOpenGL(window.get(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
+    // 创建layer
+    auto app = ui();
+    app->children->push_back(ui_option());
+    app->children->push_back(ui_log());
+    app->children->push_back(ui_task());
+    app->children->push_back(ui_search_mysql_data_export());
+    app->children->push_back(ui_read_sql_data_import());
+    app->children->push_back(ui_help());
     // loop
     while (!glfwWindowShouldClose(window.get())) {
         // poll events
@@ -86,7 +95,7 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         // set ui
-        main_render(version);
+        app->render();
         // imgui render
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -207,6 +207,12 @@ add_mysql_connector_cpp(
 include("${custom_module}/packages/serialize/json/rapidjson/rapidjson.cmake")
 add_rapidjson(name "rapidjson-1.1.0" version "1.1.0" prefix "${third_path}" proxy "${socks5_proxy}")
 
+include("${custom_module}/packages/serialize/json/jsoncpp/jsoncpp.cmake")
+add_jsoncpp(name "jsoncpp-1.9.5" version "1.9.5" prefix "${third_path}" proxy "${socks5_proxy}")
+
+include("${custom_module}/packages/serialize/json/nlohmannjson/nlohmann-json.cmake")
+add_nlohmannjson(name "nlohmannjson-3.11.3" version "3.11.3" prefix "${third_path}" proxy "${socks5_proxy}")
+
 # ==================================================
 # =================== 添加子项目 ===================
 # ==================================================
