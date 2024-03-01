@@ -1,5 +1,35 @@
 include(ExternalProject)
 
+# install zlib script
+# script:   script file save path
+# source:   source code path
+function(zlib_patch_script)
+    # params
+    cmake_parse_arguments(zlib "" "script;source;" "" ${ARGN})
+    # set params
+    set(script_content "\
+# set info
+set(source  \"${zlib_source}\")
+")
+    string(APPEND script_content [[
+# write CMakeLists.txt content
+file(READ "${source}/CMakeLists.txt" content)
+set(replace_content "\
+if(BUILD_SHARED_LIBS)
+    add_library(zlib SHARED \${ZLIB_SRCS} \${ZLIB_DLL_SRCS} \${ZLIB_PUBLIC_HDRS} \${ZLIB_PRIVATE_HDRS})
+else()
+    add_library(zlib STATIC \${ZLIB_SRCS} \${ZLIB_PUBLIC_HDRS} \${ZLIB_PRIVATE_HDRS})
+endif()
+target_include_directories(zlib PUBLIC \${CMAKE_CURRENT_BINARY_DIR} \${CMAKE_CURRENT_SOURCE_DIR})\
+")
+set(regex_string "add_library\\(zlib SHARED.*\\\${CMAKE_CURRENT_SOURCE_DIR}\\)")
+string(REGEX REPLACE "${regex_string}" "${replace_content}" content "${content}")
+string(REGEX REPLACE " zlibstatic" "" content "${content}")
+file(WRITE "${source}/CMakeLists.txt" "${content}")
+]])
+    file(WRITE "${zlib_script}" "${script_content}")
+endfunction()
+
 # check and get cmake args params
 # parameter:    check cmake parameter
 # default:      default value
@@ -130,6 +160,7 @@ function(add_zlib)
     set(zlib_install   "${zlib_prefix}/cache/install/${zlib_name}/${zlib_build_type}")
     set(zlib_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(zlib_source    "${zlib_prefix}/${zlib_name}")
+    set(zlib_patch      "${zlib_prefix}/cache/patch/${zlib_name}")
     if(MSVC)
         set(zlib_binary "${zlib_prefix}/cache/bin/${zlib_name}")
     else()
@@ -176,10 +207,14 @@ function(add_zlib)
         set(zlib_url_option GIT_REPOSITORY "${zlib_repository_url}" GIT_TAG "${zlib_version}"
                             GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
+    # patch
+    set(zlib_patch_file "${zlib_patch}/patch.cmake")
+    zlib_patch_script(script "${zlib_patch_file}" source "${zlib_source}")
+    set(zlib_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${zlib_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${zlib_download}" SOURCE_DIR "${zlib_source}"
                                         ${zlib_url_option} CMAKE_ARGS ${zlib_cmake_options} EXCLUDE_FROM_ALL ON
-                                        ${zlib_build_cmd} ${zlib_install_cmd} DEPENDS ${zlib_deps}
+                                        ${zlib_patch_cmd} ${zlib_build_cmd} ${zlib_install_cmd} DEPENDS ${zlib_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
     # check is build shared/static
@@ -201,18 +236,14 @@ function(add_zlib)
             if("${zlib_build_type_upper}" STREQUAL "DEBUG")
                 set(zlib_suffix "d")
             endif()
-            if(zlib_build_shared)
-                set(lib_name "zlib${zlib_suffix}.lib")
-            else()
-                set(lib_name "zlibstatic${zlib_suffix}.lib")
-            endif()
+            set(lib_name "zlib${zlib_suffix}.lib")
             set(bin_name "zlib${zlib_suffix}1.dll")
         endif()
         if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
             if(zlib_build_shared)
                 set(lib_name "libzlib.a")
             else()
-                set(lib_name "libzlibstatic.a")
+                set(lib_name "libzlib.a")
             endif()
             set(bin_name "zlib1.dll")
         endif()

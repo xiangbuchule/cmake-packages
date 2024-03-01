@@ -66,7 +66,12 @@ add_zlib(
 
 # openssl1
 include("${custom_module}/packages/encrypt/openssl/openssl1.cmake")
-get_target_property(zlib-lib zlib-1.3.1 IMPORTED_IMPLIB)
+if(WIN32 AND BUILD_SHARED_LIBS)
+    get_target_property(zlib-lib zlib-1.3.1 IMPORTED_LOCATION)
+    set(zlib-dynamic "zlib-dynamic")
+else()
+    get_target_property(zlib-lib zlib-1.3.1 IMPORTED_IMPLIB)
+endif()
 add_openssl1(
     name        "openssl1-1.1.1w"
     prefix      "${third_path}"
@@ -75,7 +80,7 @@ add_openssl1(
     perl        "${perl-5.36.1.1-path}"
     proxy       "${socks5_proxy}"
     deps        "tool-nasm-2.16.01" "tool-perl-5.36.1.1" "pkg-zlib-1.3.1"
-    options     "no-tests" "zlib" "zlib-dynamic"
+    options     "no-tests" "zlib" "${zlib-dynamic}"
                 "--with-zlib-lib=${zlib-lib}"
                 "--with-zlib-include=${zlib-1.3.1-root}/include"
 )
@@ -184,6 +189,20 @@ add_imgui(
     backends    "glfw" "opengl3"
 )
 
+# mysql8
+include("${custom_module}/packages/database/mysql/mysql8.cmake")
+add_mysql8(
+    name    "mysql8-8.3.0"
+    version "8.3.0"
+    deps    "pkg-openssl1-1.1.1w"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+    "-DWITH_SSL=${openssl1-1.1.1w-root}"
+    # "-DBISON_EXECUTABLE="
+    "-DWITH_NDB=OFF"
+    "-DWITHOUT_SERVER=ON" "-DWITH_ROUTER=OFF" "-DWITH_UNIT_TESTS=OFF"
+)
+
 # mysql-connecter-c
 include("${custom_module}/packages/database/mysql/mysql-connector-c.cmake")
 add_mysql_connector_c(
@@ -195,12 +214,14 @@ add_mysql_connector_c(
 # mysql-connecter-cpp
 include("${custom_module}/packages/database/mysql/mysql-connector-cpp.cmake")
 add_mysql_connector_cpp(
-    name    "mysql-connector-cpp-8.0.33"
-    version "8.0.33"
-    deps    "pkg-openssl1-1.1.1w"
+    name    "mysql-connector-cpp-8.3.0"
+    version "8.3.0"
+    deps    "pkg-openssl1-1.1.1w" "pkg-zlib-1.3.1" "pkg-mysql8-8.3.0"
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
     "-DWITH_SSL=${openssl1-1.1.1w-root}"
+    "-DWITH_JDBC=ON" "-DWITH_MYSQL=${mysql8-8.3.0-root}"
+    "-DWITH_ZLIB=${zlib-1.3.1-root}"
 )
 
 # rapidjson

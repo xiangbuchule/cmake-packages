@@ -16,6 +16,24 @@
 
 #include "zip.h"
 
+#include "jdbc/mysql_driver.h"
+
+#include "jdbc/mysql_connection.h"
+
+#include "jdbc/cppconn/driver.h"
+
+#include "jdbc/cppconn/connection.h"
+
+#include "jdbc/cppconn/resultset.h"
+
+#include "jdbc/cppconn/statement.h"
+
+#include "jdbc/cppconn/prepared_statement.h"
+
+#include "jdbc/cppconn/exception.h"
+
+#include "mysqlx/xdevapi.h"
+
 extern "C" {
 #include "rc.h"
 }
@@ -28,8 +46,26 @@ extern "C" {
 void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint action, GLint mods);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void window_size_callback(GLFWwindow *window, int width, int height);
-
-int main() {
+int  main() {
+    // sql::mysql::MySQL_Driver *driver;
+    // sql::Connection          *con;
+    // // 创建 MySQL 连接
+    // driver = sql::mysql::get_mysql_driver_instance();
+    // con    = driver->connect("tcp://192.168.2.197:9401", "root", "cctv");
+    // // // 选择数据库
+    // // con->setSchema("mysql");
+    // // // 执行查询
+    // // sql::Statement *stmt;
+    // // sql::ResultSet *res;
+    // // stmt = con->createStatement();
+    // // res  = stmt->executeQuery("SELECT 1234/2345");
+    // // // 处理结果
+    // // while (res->next()) {
+    // //     auto ss = res->getDouble(1);
+    // // }
+    // // delete res;
+    // // delete stmt;
+    // // delete con;
     // 初始化
     init();
     // zip对象

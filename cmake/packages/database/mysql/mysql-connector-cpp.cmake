@@ -1,5 +1,35 @@
 include(ExternalProject)
 
+# install mysql_connector_cpp script
+# script:   script file save path
+# source:   source code path
+function(mysql_connector_cpp_patch_script)
+    # params
+    cmake_parse_arguments(mysql_connector_cpp "" "script;source" "" ${ARGN})
+    # set params
+    set(script_content "\
+# set info
+set(source  \"${mysql_connector_cpp_source}\")
+")
+    string(APPEND script_content [[
+# write CMakeLists.txt content
+file(READ "${source}/cdk/cmake/dependency.cmake" content)
+set(regex_string "NAMES \${name} lib\${name}")
+set(replace_content "${regex_string} \${name}lib \${name}libd")
+string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
+set(regex_string "      message(FATAL_ERROR \"Can't specify both \${EXT_LIB} root dir and include/libs parameters\")")
+set(replace_content "\
+      unset(\${EXT_LIB}_INCLUDE_DIR)
+      unset(\${EXT_LIB}_LIB_DIR)
+      unset(\${EXT_LIB}_LIBRARY)
+      # ${regex_string}\
+")
+string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
+file(WRITE "${source}/cdk/cmake/dependency.cmake" "${content}")
+]])
+    file(WRITE "${mysql_connector_cpp_script}" "${script_content}")
+endfunction()
+
 # check and get cmake args params
 # parameter:    check cmake parameter
 # default:      default value
@@ -185,6 +215,7 @@ function(add_mysql_connector_cpp)
     set(mysql_install   "${mysql_prefix}/cache/install/${mysql_name}/${mysql_build_type}")
     set(mysql_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(mysql_source    "${mysql_prefix}/${mysql_name}")
+    set(mysql_patch     "${mysql_prefix}/cache/patch/${mysql_name}")
     if(MSVC)
         set(mysql_binary "${mysql_prefix}/cache/bin/${mysql_name}")
     else()
@@ -230,22 +261,19 @@ function(add_mysql_connector_cpp)
     if(${mysql_version_index} GREATER_EQUAL 0)
         set(mysql_url_option URL "${mysql_url}" URL_HASH SHA256=${mysql_hash} DOWNLOAD_NAME "${mysql_file}")
     else()
-        set(mysql_url_option   GIT_REPOSITORY "${mysql_repository_url}" GIT_TAG "${mysql_version}"
+        set(mysql_url_option    GIT_REPOSITORY "${mysql_repository_url}" GIT_TAG "${mysql_version}"
                                 GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
+    # patch
+    set(mysql_patch_file "${mysql_patch}/patch.cmake")
+    mysql_connector_cpp_patch_script(script "${mysql_patch_file}" source "${mysql_source}")
+    set(mysql_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${mysql_download}" SOURCE_DIR "${mysql_source}"
                                         ${mysql_url_option} CMAKE_ARGS ${mysql_cmake_options} EXCLUDE_FROM_ALL ON
                                         ${mysql_patch_cmd} ${mysql_build_cmd} ${mysql_install_cmd} DEPENDS ${mysql_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
-    # check is build shared/static
-    if(mysql_build_shared)
-        add_library("${mysql_name}" SHARED IMPORTED GLOBAL)
-    else()
-        add_library("${mysql_name}" STATIC IMPORTED GLOBAL)
-    endif()
-    add_dependencies("${mysql_name}" "${pkg_name}")
     # set lib path dir
     set("${mysql_name}-includes"    "${mysql_install}/include"          PARENT_SCOPE)
     set("${mysql_name}-pkgconfig"   "${mysql_install}/lib/pkgconfig"    PARENT_SCOPE)
@@ -256,6 +284,16 @@ function(add_mysql_connector_cpp)
     endif()
     set(lib_path "${mysql_install}/lib${extra_path}")
     set(bin_path "${mysql_install}/lib${extra_path}")
+    # check is build shared/static
+    if(mysql_build_shared)
+        add_library("${mysql_name}::jdbc" SHARED IMPORTED GLOBAL)
+        add_library("${mysql_name}::xdev" SHARED IMPORTED GLOBAL)
+    else()
+        add_library("${mysql_name}::jdbc" STATIC IMPORTED GLOBAL)
+        add_library("${mysql_name}::xdev" STATIC IMPORTED GLOBAL)
+    endif()
+    add_dependencies("${mysql_name}::jdbc" "${pkg_name}")
+    add_dependencies("${mysql_name}::xdev" "${pkg_name}")
     # set name
     get_cmake_args(arg "STATIC_MSVCRT" default "OFF" result "mysql_static_msvcrt" args_list_name "mysql_cmake_options")
     if(NOT mysql_build_shared)
@@ -267,12 +305,22 @@ function(add_mysql_connector_cpp)
     # set file
     if(MSVC)
         string(REGEX REPLACE "[0-9]$" "" vs_version "${MSVC_TOOLSET_VERSION}")
+        guess_binary_file(name "mysql" lib_suffix "cppconn${extra_suffix}" bin_suffix "cppconn-9-vs${vs_version}")
+    else()
+        guess_binary_file(name "mysql" lib_suffix "cppconn${extra_suffix}" bin_suffix "cppconn")
+    endif()
+    set_target_properties("${mysql_name}::jdbc" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${mysql_lib}")
+    if(mysql_build_shared)
+        set_target_properties("${mysql_name}::jdbc" PROPERTIES IMPORTED_LOCATION "${bin_path}/${mysql_bin}")
+    endif()
+    if(MSVC)
+        string(REGEX REPLACE "[0-9]$" "" vs_version "${MSVC_TOOLSET_VERSION}")
         guess_binary_file(name "mysql" lib_suffix "cppconn8${extra_suffix}" bin_suffix "cppconn8-2-vs${vs_version}")
     else()
         guess_binary_file(name "mysql" lib_suffix "cppconn8${extra_suffix}" bin_suffix "cppconn8")
     endif()
-    set_target_properties("${mysql_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${mysql_lib}")
+    set_target_properties("${mysql_name}::xdev" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${mysql_lib}")
     if(mysql_build_shared)
-        set_target_properties("${mysql_name}" PROPERTIES IMPORTED_LOCATION "${bin_path}/${mysql_bin}")
+        set_target_properties("${mysql_name}::xdev" PROPERTIES IMPORTED_LOCATION "${bin_path}/${mysql_bin}")
     endif()
 endfunction()

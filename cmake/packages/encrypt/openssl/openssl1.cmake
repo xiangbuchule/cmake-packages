@@ -3,13 +3,15 @@ include(ExternalProject)
 # install openssl1 script
 # script:   script file save path
 # source:   source dir
+# zlib:     zlib file path
 function(openssl1_patch_script)
     # params
-    cmake_parse_arguments(openssl1 "" "script;source" "" ${ARGN})
+    cmake_parse_arguments(openssl1 "" "script;source;zlib" "" ${ARGN})
     # set params
     set(script_content "\
 # set perl/nasm info
-set(source \"${openssl1_source}\")
+set(source  \"${openssl1_source}\")
+set(zlib    \"${openssl1_zlib}\")
 ")
     # set other script
     string(APPEND script_content [[
@@ -20,6 +22,9 @@ string(APPEND replace_content "no warnings 'all';")
 file(READ "${source}/Configure" old_content)
 string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
 file(WRITE "${source}/Configure" "${new_content}")
+if(NOT ("${zlib}" STREQUAL ""))
+    file(COPY "${zlib}" DESTINATION "${source}")
+endif()
 ]])
     file(WRITE "${openssl1_script}" "${script_content}")
 endfunction()
@@ -205,6 +210,21 @@ function(add_openssl1)
                 names openssl1_options openssl1_UNPARSED_ARGUMENTS)
     set(config_options_tmp "${openssl1_options};${openssl1_UNPARSED_ARGUMENTS}")
     string(REGEX REPLACE "(^;)|(;$)" "" config_options_tmp "${config_options_tmp}")
+    # find zlib
+    foreach(item IN LISTS config_options_tmp)
+        string(REGEX MATCH "--with-zlib-lib" zlib_file "${item}")
+        if(zlib_file)
+            string(REGEX REPLACE "--with-zlib-lib.*=" "" zlib_file "${item}")
+            string(STRIP "${zlib_file}" zlib_file)
+            break()
+        endif()
+    endforeach()
+    if(NOT ("${zlib_file}" STREQUAL ""))
+        get_filename_component(zlib_file_name "${zlib_file}" NAME)
+        replace_list(option "REPLACE" regex "--with-zlib-lib" replace "--with-zlib-lib=${zlib_file_name}"
+                    remove OFF names config_options_tmp)
+    endif()
+    # find others
     if(BUILD_SHARED_LIBS)
         append_list(content "shared" regex "shared$" names config_options_tmp)
     else()
@@ -284,7 +304,7 @@ function(add_openssl1)
     endif()
     # patch
     set(openssl1_patch_file "${openssl1_patch}/patch.cmake")
-    openssl1_patch_script(script "${openssl1_patch_file}" source "${openssl1_source}")
+    openssl1_patch_script(script "${openssl1_patch_file}" source "${openssl1_source}" zlib "${zlib_file}")
     set(openssl1_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${openssl1_patch_file}")
     if(MSVC)
         set(openssl1_configure_cmd CONFIGURE_COMMAND COMMAND "")

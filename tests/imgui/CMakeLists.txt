@@ -59,10 +59,10 @@ list(APPEND source_file "${project_extra_source_path}/rc.c"
 add_executable(${PROJECT_NAME} ${source_file})
 # 目标依赖项
 add_dependencies(
-    ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
-                    bzip2-master libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
+    ${PROJECT_NAME} libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
                     freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
-                    mysql-connector-cpp-8.0.33 rapidjson-1.1.0
+                    mysql-connector-cpp-8.3.0::jdbc mysql-connector-cpp-8.3.0::xdev
+                    rapidjson-1.1.0
 )
 # 目标include
 target_include_directories(
@@ -77,7 +77,7 @@ target_include_directories(
     "${glfw3-3.3.9-includes}"
     "${freetype2-2.13.2-includes}"
     "${libzip-1.10.1-includes}"
-    "${mysql-connector-cpp-8.0.33-includes}"
+    "${mysql-connector-cpp-8.3.0-includes}"
 )
 # 声明一下源文件是被生成的
 # 防止generate阶段报错找不到源文件
@@ -90,10 +90,10 @@ add_custom_command(
 )
 # 目标链接项
 target_link_libraries(
-    ${PROJECT_NAME} zlib-1.3.1 openssl1-1.1.1w::ssl openssl1-1.1.1w::crypto
-                    libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
+    ${PROJECT_NAME} libzip-1.10.1 glad2-2.0.4 glfw3-3.3.9 stb-master
                     freetype2-2.13.2 imgui-1.90.4-docking-glfw-opengl3
-                    mysql-connector-cpp-8.0.33 rapidjson-1.1.0
+                    mysql-connector-cpp-8.3.0::jdbc mysql-connector-cpp-8.3.0::xdev
+                    rapidjson-1.1.0
 )
 target_compile_definitions(
     ${PROJECT_NAME} PRIVATE
@@ -129,7 +129,8 @@ endif()
 # set file list
 set(file_lists  "$<TARGET_FILE:zlib-1.3.1>" "$<TARGET_FILE:libzip-1.10.1>" "$<TARGET_FILE:freetype2-2.13.2>"
                 "$<TARGET_FILE:glad2-2.0.4>" "$<TARGET_FILE:glfw3-3.3.9>" "$<TARGET_FILE:openssl1-1.1.1w::ssl>"
-                "$<TARGET_FILE:openssl1-1.1.1w::crypto>" "$<TARGET_FILE:mysql-connector-cpp-8.0.33>")
+                "$<TARGET_FILE:openssl1-1.1.1w::crypto>" "$<TARGET_FILE:mysql-connector-cpp-8.3.0::jdbc>"
+                "$<TARGET_FILE:mysql-connector-cpp-8.3.0::xdev>" "$<TARGET_FILE:mysql8-8.3.0>")
 add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
