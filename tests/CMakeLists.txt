@@ -111,9 +111,23 @@ add_bzip2(
     name    "bzip2-master"
     version "master"
     prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     python  "${python3-3.13.0a1-path}"
     deps    "tool-python3-3.13.0a1"
+)
+
+# libarchive
+include("${custom_module}/packages/compress/libarchive/libarchive.cmake")
+add_libarchive(
+    name    "libarchive-3.7.2"
+    version "3.7.2"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+    deps    "pkg-zlib-1.3.1" "pkg-bzip2-master" "pkg-openssl1-1.1.1w"
+    openssl "${openssl1-1.1.1w-root}"
+    zlib    "${zlib-1.3.1-root}"
+    bzip2   "${bzip2-master-root}"
+    "-DENABLE_BZip2=ON" "-DENABLE_ICONV=OFF"
 )
 
 # libzip
@@ -122,7 +136,7 @@ add_libzip(
     name    "libzip-1.10.1"
     version "1.10.1"
     prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     deps    "pkg-zlib-1.3.1" "pkg-bzip2-master"
     zlib    "${zlib-1.3.1-root}"
     bzip2   "${bzip2-master-root}"
@@ -183,7 +197,7 @@ add_imgui(
     name        "imgui-1.90.4-docking-glfw-opengl3"
     version     "1.90.4-docking"
     prefix      "${third_path}"
-    # proxy       "${socks5_proxy}"
+    proxy       "${socks5_proxy}"
     deps        "pkg-glad2-2.0.4" "pkg-glfw3-3.3.9" "pkg-freetype2-2.13.2"
     freetype    ON
     backends    "glfw" "opengl3"

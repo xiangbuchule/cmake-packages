@@ -1,5 +1,4 @@
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -14,25 +13,17 @@
 
 #include "stb_image.h"
 
-#include "zip.h"
-
-#include "jdbc/mysql_driver.h"
-
-#include "jdbc/mysql_connection.h"
-
-#include "jdbc/cppconn/driver.h"
-
 #include "jdbc/cppconn/connection.h"
-
-#include "jdbc/cppconn/resultset.h"
-
-#include "jdbc/cppconn/statement.h"
-
-#include "jdbc/cppconn/prepared_statement.h"
-
+#include "jdbc/cppconn/driver.h"
 #include "jdbc/cppconn/exception.h"
-
+#include "jdbc/cppconn/prepared_statement.h"
+#include "jdbc/cppconn/resultset.h"
+#include "jdbc/cppconn/statement.h"
+#include "jdbc/mysql_connection.h"
+#include "jdbc/mysql_driver.h"
 #include "mysqlx/xdevapi.h"
+
+#include "archive.h"
 
 extern "C" {
 #include "rc.h"
@@ -47,38 +38,33 @@ void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint act
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void window_size_callback(GLFWwindow *window, int width, int height);
 int  main() {
-    // sql::mysql::MySQL_Driver *driver;
-    // sql::Connection          *con;
-    // // 创建 MySQL 连接
-    // driver = sql::mysql::get_mysql_driver_instance();
-    // con    = driver->connect("tcp://192.168.2.197:9401", "root", "cctv");
-    // // // 选择数据库
-    // // con->setSchema("mysql");
-    // // // 执行查询
-    // // sql::Statement *stmt;
-    // // sql::ResultSet *res;
-    // // stmt = con->createStatement();
-    // // res  = stmt->executeQuery("SELECT 1234/2345");
-    // // // 处理结果
-    // // while (res->next()) {
-    // //     auto ss = res->getDouble(1);
-    // // }
-    // // delete res;
-    // // delete stmt;
-    // // delete con;
+    // 创建 MySQL 连接
+    sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
+    sql::Connection          *con    = driver->connect("tcp://192.168.2.197:9401", "root", "cctv");
+    // 选择数据库
+    con->setSchema("mysql");
+    // 执行查询
+    sql::Statement *stmt;
+    sql::ResultSet *res;
+    stmt = con->createStatement();
+    res  = stmt->executeQuery("SELECT 1234/2345");
+    // 处理结果
+    while (res->next()) {
+        auto ss = res->getDouble(1);
+        int  s  = 10;
+    }
+    delete res;
+    delete stmt;
+    delete con;
     // 初始化
     init();
-    // zip对象
-    auto [archive, source] = get_zip_object(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]));
     // shader
-    auto [vert_shader, vert_shader_len] = read_zip_file_content<unsigned char>(archive, "shaders/main.vert");
-    auto [frag_shader, frag_shader_len] = read_zip_file_content<unsigned char>(archive, "shaders/main.frag");
+    auto [vert_shader, vert_shader_len] = read_zip_file_content<unsigned char>(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]), "shaders/main.vert");
+    auto [frag_shader, frag_shader_len] = read_zip_file_content<unsigned char>(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]), "shaders/main.frag");
     // icons
-    auto [icon_16x16, icon_16x16_len] = read_zip_file_content<unsigned char>(archive, "icons/16x16_icon.png");
-    auto [icon_32x32, icon_32x32_len] = read_zip_file_content<unsigned char>(archive, "icons/32x32_icon.png");
-    auto [icon_48x48, icon_48x48_len] = read_zip_file_content<unsigned char>(archive, "icons/48x48_icon.png");
-    archive.reset();
-    source.reset();
+    auto [icon_16x16, icon_16x16_len] = read_zip_file_content<unsigned char>(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]), "icons/16x16_icon.png");
+    auto [icon_32x32, icon_32x32_len] = read_zip_file_content<unsigned char>(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]), "icons/32x32_icon.png");
+    auto [icon_48x48, icon_48x48_len] = read_zip_file_content<unsigned char>(RC_DATA, sizeof(RC_DATA) / sizeof(RC_DATA[0]), "icons/48x48_icon.png");
     // create window
     // std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow * ptr)>> window(glfwCreateWindow(800, 600, "glfw window", NULL, NULL), [](GLFWwindow *ptr) { glfwDestroyWindow(ptr); });
     std::shared_ptr<GLFWwindow> window(glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, MAIN_TITLE_NAME, NULL, NULL), [](GLFWwindow *ptr) { glfwDestroyWindow(ptr); });

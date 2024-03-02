@@ -232,7 +232,7 @@ function(add_nlohmannjson)
     # set pkg name
     set(pkg_name "pkg-${nlohmannjson_name}")
     replace_list(option "FIND_NOT_REGEX" regex "-D( *)?JSON_Install( *)?=(.*)?" replace "" remove OFF
-                names nlohmannjson_options nlohmannjson_UNPARSED_ARGUMENTS)
+                names nlohmannjson_UNPARSED_ARGUMENTS)
     # check is build debug/release
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "nlohmannjson_build_type" args_list_name "nlohmannjson_UNPARSED_ARGUMENTS")
     # address

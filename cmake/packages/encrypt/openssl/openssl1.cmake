@@ -204,9 +204,9 @@ function(add_openssl1)
     # set pkg name
     set(pkg_name "pkg-${openssl1_name}")
         # get config option
-    replace_list(option "REPLACE" regex "^--prefix=" replace "" remove OFF
+    replace_list(option "FIND_NOT_REGEX" regex "^--prefix=" replace "" remove OFF
                 names openssl1_options openssl1_UNPARSED_ARGUMENTS)
-    replace_list(option "REPLACE" regex "^--openssldir=" replace "" remove OFF
+    replace_list(option "FIND_NOT_REGEX" regex "^--openssldir=" replace "" remove OFF
                 names openssl1_options openssl1_UNPARSED_ARGUMENTS)
     set(config_options_tmp "${openssl1_options};${openssl1_UNPARSED_ARGUMENTS}")
     string(REGEX REPLACE "(^;)|(;$)" "" config_options_tmp "${config_options_tmp}")
@@ -220,7 +220,7 @@ function(add_openssl1)
         endif()
     endforeach()
     if(NOT ("${zlib_file}" STREQUAL ""))
-        get_filename_component(zlib_file_name "${zlib_file}" NAME)
+        get_filename_component(zlib_file_name "${zlib_file}" NAME_WLE)
         replace_list(option "REPLACE" regex "--with-zlib-lib" replace "--with-zlib-lib=${zlib_file_name}"
                     remove OFF names config_options_tmp)
     endif()
