@@ -60,8 +60,17 @@ add_zlib(
     name    "zlib-1.3.1"
     version "1.3.1"
     prefix  "${third_path}"
-    # proxy   "${socks5_proxy}"
+    proxy   "${socks5_proxy}"
     "-DZLIB_BUILD_EXAMPLES=OFF"
+)
+
+# xz
+include("${custom_module}/packages/compress/xz/xz.cmake")
+add_xz(
+    name    "xz-5.6.0"
+    version "5.6.0"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
 )
 
 # openssl1
@@ -123,10 +132,11 @@ add_libarchive(
     version "3.7.2"
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
-    deps    "pkg-zlib-1.3.1" "pkg-bzip2-master" "pkg-openssl1-1.1.1w"
+    deps    "pkg-zlib-1.3.1" "pkg-bzip2-master" "pkg-openssl1-1.1.1w" "pkg-xz-5.6.0"
     openssl "${openssl1-1.1.1w-root}"
     zlib    "${zlib-1.3.1-root}"
     bzip2   "${bzip2-master-root}"
+    lzma    "${xz-5.6.0-root}"
     "-DENABLE_BZip2=ON" "-DENABLE_ICONV=OFF"
 )
 

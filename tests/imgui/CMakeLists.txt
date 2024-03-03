@@ -75,7 +75,7 @@ set(deps_libs_file  "zlib-1.3.1" "libzip-1.10.1" "freetype2-2.13.2"
                     "glad2-2.0.4" "glfw3-3.3.9" "openssl1-1.1.1w::ssl"
                     "openssl1-1.1.1w::crypto" "mysql-connector-cpp-8.3.0::jdbc"
                     "mysql-connector-cpp-8.3.0::xdev" "mysql8-8.3.0"
-                    "libarchive-3.7.2::shared" "jsoncpp-1.9.5")
+                    "libarchive-3.7.2::shared" "jsoncpp-1.9.5" "xz-5.6.0")
 
 # 查找源文件
 file(GLOB_RECURSE files CONFIGURE_DEPENDS "${project_source_path}/*.cpp")

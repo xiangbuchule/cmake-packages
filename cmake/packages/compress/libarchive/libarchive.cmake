@@ -5,9 +5,10 @@ include(ExternalProject)
 # source:   source code path
 # zlib:     zlib path dir
 # bzip2:    bzip2 path dir
+# lzma:     lzma path dir
 function(libarchive_patch_script)
     # params
-    cmake_parse_arguments(libarchive "" "script;source;openssl;zlib;bzip2" "" ${ARGN})
+    cmake_parse_arguments(libarchive "" "script;source;openssl;zlib;bzip2;lzma" "" ${ARGN})
     # set params
     set(script_content "\
 # set info
@@ -15,6 +16,7 @@ set(source  \"${libarchive_source}\")
 set(openssl \"${libarchive_openssl}\")
 set(zlib    \"${libarchive_zlib}\")
 set(bzip2   \"${libarchive_bzip2}\")
+set(lzma    \"${libarchive_lzma}\")
 ")
     string(APPEND script_content [[
 
@@ -31,6 +33,10 @@ if(NOT ("" STREQUAL "${zlib}"))
 endif()
 if(NOT ("" STREQUAL "${bzip2}"))
     string(APPEND replace_content "set(ENV{PATH} \"${bzip2};\$ENV{PATH}\")\n")
+endif()
+string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
+if(NOT ("" STREQUAL "${lzma}"))
+    string(APPEND replace_content "set(ENV{PATH} \"${lzma};\$ENV{PATH}\")\n")
 endif()
 string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
 
@@ -306,7 +312,7 @@ endfunction()
 #   INSTALL_DOCS:           OFF
 function(add_libarchive)
     # params
-    cmake_parse_arguments(libarchive "" "name;prefix;version;proxy;openssl;zlib;bzip2" "deps" ${ARGN})
+    cmake_parse_arguments(libarchive "" "name;prefix;version;proxy;openssl;zlib;bzip2;lzma" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${libarchive_name}" OR (DEFINED "${libarchive_name}-includes"))
         return()
@@ -399,6 +405,7 @@ function(add_libarchive)
     libarchive_patch_script(
         script "${libarchive_patch_file}" source "${libarchive_source}"
         openssl "${libarchive_openssl}" zlib "${libarchive_zlib}" bzip2 "${libarchive_bzip2}"
+        lzma "${libarchive_lzma}"
     )
     set(libarchive_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${libarchive_patch_file}")
     # start build
