@@ -148,10 +148,17 @@ endfunction()
 # deps:     deps target
 # python:   python path dir
 # ARGN: this will add this to build cmake args
-#   ENABLE_LIB_ONLY:    ON
+#   JSONCPP_WITH_TESTS:                 OFF
+#   JSONCPP_WITH_POST_BUILD_UNITTEST:   OFF
+#   JSONCPP_WITH_WARNING_AS_ERROR:      OFF
+#   JSONCPP_WITH_STRICT_ISO:            ON
+#   JSONCPP_WITH_PKGCONFIG_SUPPORT:     ON
+#   JSONCPP_WITH_CMAKE_PACKAGE:         ON
+#   JSONCPP_WITH_EXAMPLE:               OFF
+#   JSONCPP_STATIC_WINDOWS_RUNTIME:     OFF
 function(add_jsoncpp)
     # params
-    cmake_parse_arguments(jsoncpp "" "name;prefix;version;proxy;python" "deps" ${ARGN})
+    cmake_parse_arguments(jsoncpp "" "name;prefix;version;proxy" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${jsoncpp_name}" OR (DEFINED "${jsoncpp_name}-includes"))
         return()
@@ -254,12 +261,12 @@ function(add_jsoncpp)
     endif()
     add_dependencies("${jsoncpp_name}" "${pkg_name}")
     # set lib path dir
-    set("${jsoncpp_name}-includes"    "${jsoncpp_install}/include"          PARENT_SCOPE)
-    set("${jsoncpp_name}-pkgconfig"   "${jsoncpp_install}/lib/pkgconfig"    PARENT_SCOPE)
+    set("${jsoncpp_name}-includes"      "${jsoncpp_install}/include"        PARENT_SCOPE)
+    set("${jsoncpp_name}-pkgconfig"     "${jsoncpp_install}/lib/pkgconfig"  PARENT_SCOPE)
     set("${jsoncpp_name}-cmake"         "${jsoncpp_install}/lib/cmake"      PARENT_SCOPE)
-    set("${jsoncpp_name}-root"        "${jsoncpp_install}"                  PARENT_SCOPE)
+    set("${jsoncpp_name}-root"          "${jsoncpp_install}"                PARENT_SCOPE)
     set(lib_path "${jsoncpp_install}/lib")
-    set(bin_path "${jsoncpp_install}/lib")
+    set(bin_path "${jsoncpp_install}/bin")
     guess_binary_file(name "jsoncpp")
     set_target_properties("${jsoncpp_name}" PROPERTIES IMPORTED_IMPLIB "${lib_path}/${jsoncpp_lib}")
     if(jsoncpp_build_shared)

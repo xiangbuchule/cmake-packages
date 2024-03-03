@@ -1,13 +1,10 @@
 #include <memory>
 #include <vector>
 
-#include "rapidjson/document.h"
-
 #include "ui/layer.h"
 
 Layer::Layer() noexcept {
     this->state = std::make_shared<State>();
-    this->state->value.SetObject();
     this->children = std::make_unique<std::vector<std::shared_ptr<Layer>>>();
 }
 Layer::Layer(Layer &&other) noexcept {

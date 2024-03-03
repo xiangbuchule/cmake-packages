@@ -5,12 +5,11 @@
 #include <functional>
 #include <memory>
 
-#include "rapidjson/document.h"
+#include "json/json.h"
 
 struct State {
-    rapidjson::Document value;
+    Json::Value value;
     State() noexcept {
-        this->value.SetObject();
     }
 };
 

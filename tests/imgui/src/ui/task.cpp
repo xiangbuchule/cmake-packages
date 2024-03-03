@@ -6,7 +6,6 @@
 #include "imgui_internal.h"
 
 #include "global.h"
-#include "rapidjson/document.h"
 #include "ui/layer.h"
 #include "ui/static.h"
 #include "ui/ui.h"

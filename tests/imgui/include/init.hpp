@@ -170,7 +170,8 @@ void init() {
     font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_LoadColor; // 启用FreeType颜色分层字形
     font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_Bitmap;    // 启用FreeType位图字形
     // font_cfg.FontDataOwnedByAtlas = false; // imgui不拥有字体数据,我们自己释放字体数据
-    io.Fonts->AddFontFromMemoryTTF((void *)hack_font_ptr, (int)hack_font_len, 15., &font_cfg, io.Fonts->GetGlyphRangesDefault());
+    const ImWchar ranges[] = {0x20, 0xFFFFF, 0};
+    io.Fonts->AddFontFromMemoryTTF((void *)hack_font_ptr, (int)hack_font_len, 15., &font_cfg, ranges);
     // font_cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags::ImGuiFreeTypeBuilderFlags_Bold;          // 加粗字体
     font_cfg.MergeMode = true; // 配置字体合并
     io.Fonts->AddFontFromMemoryTTF((void *)simplified_chinese_font_ptr, (int)simplified_chinese_font_len, 15., &font_cfg, io.Fonts->GetGlyphRangesChineseFull());

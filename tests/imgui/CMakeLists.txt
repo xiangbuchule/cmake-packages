@@ -65,17 +65,17 @@ add_custom_command(
 set(deps_libs   "glad2-2.0.4" "glfw3-3.3.9" "stb-master" "freetype2-2.13.2"
                 "libarchive-3.7.2::shared" "imgui-1.90.4-docking-glfw-opengl3"
                 "mysql-connector-cpp-8.3.0::jdbc" "mysql-connector-cpp-8.3.0::xdev"
-                "rapidjson-1.1.0")
+                "jsoncpp-1.9.5")
 # 设置依赖库includes
 set(deps_includes   "${glad2-2.0.4-includes}" "${glfw3-3.3.9-includes}"
                     "${freetype2-2.13.2-includes}" "${libarchive-3.7.2-includes}"
-                    "${mysql-connector-cpp-8.3.0-includes}")
+                    "${mysql-connector-cpp-8.3.0-includes}" "${jsoncpp-1.9.5-includes}")
 # 设置需要拷贝额库
 set(deps_libs_file  "zlib-1.3.1" "libzip-1.10.1" "freetype2-2.13.2"
                     "glad2-2.0.4" "glfw3-3.3.9" "openssl1-1.1.1w::ssl"
                     "openssl1-1.1.1w::crypto" "mysql-connector-cpp-8.3.0::jdbc"
                     "mysql-connector-cpp-8.3.0::xdev" "mysql8-8.3.0"
-                    "libarchive-3.7.2::shared")
+                    "libarchive-3.7.2::shared" "jsoncpp-1.9.5")
 
 # 查找源文件
 file(GLOB_RECURSE files CONFIGURE_DEPENDS "${project_source_path}/*.cpp")
@@ -107,8 +107,13 @@ target_link_libraries(${PROJECT_NAME} ${deps_libs})
 # 编译定义的选项
 target_compile_definitions(
     ${PROJECT_NAME} PRIVATE
+    # 不使用glfw自带的gl函数
     GLFW_INCLUDE_NONE
+    # 支持更宽范围的字符
+    IMGUI_USE_WCHAR32
+    # imgui支持freetype
     IMGUI_ENABLE_FREETYPE
+    # 加入stb实现
     STB_IMAGE_IMPLEMENTATION
     _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 )
