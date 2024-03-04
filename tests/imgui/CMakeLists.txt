@@ -71,11 +71,11 @@ set(deps_includes   "${glad2-2.0.4-includes}" "${glfw3-3.3.9-includes}"
                     "${freetype2-2.13.2-includes}" "${libarchive-3.7.2-includes}"
                     "${mysql-connector-cpp-8.3.0-includes}" "${jsoncpp-1.9.5-includes}")
 # 设置需要拷贝额库
-set(deps_libs_file  "zlib-1.3.1" "libzip-1.10.1" "freetype2-2.13.2"
-                    "glad2-2.0.4" "glfw3-3.3.9" "openssl1-1.1.1w::ssl"
-                    "openssl1-1.1.1w::crypto" "mysql-connector-cpp-8.3.0::jdbc"
-                    "mysql-connector-cpp-8.3.0::xdev" "mysql8-8.3.0"
-                    "libarchive-3.7.2::shared" "jsoncpp-1.9.5" "xz-5.6.0")
+set(deps_libs_file  "zlib-1.3.1" "freetype2-2.13.2" "glad2-2.0.4" "glfw3-3.3.9"
+                    "openssl1-1.1.1w::ssl" "openssl1-1.1.1w::crypto"
+                    "mysql-connector-cpp-8.3.0::jdbc" "mysql-connector-cpp-8.3.0::xdev"
+                    "mysql8-8.3.0" "libarchive-3.7.2::shared" "jsoncpp-1.9.5" "xz-5.6.0"
+                    "lz4-1.9.4" "zstd-1.5.5" "libxml2-2.12")
 
 # 查找源文件
 file(GLOB_RECURSE files CONFIGURE_DEPENDS "${project_source_path}/*.cpp")

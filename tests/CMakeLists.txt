@@ -50,6 +50,19 @@ add_perl(
     sha256  "96dc0fc440e3123dd8d58df3498e41caba20610f33ed67af937a61b296c4786c"
 )
 
+# msys2
+include("${custom_module}/tools/msys/msys2.cmake")
+add_msys2(
+    name        "msys2-20240113"
+    prefix      "${third_path}"
+    url         "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.tar.xz"
+    file        "msys2-20240113.tar.xz"
+    proxy       "${socks5_proxy}"
+    sha256      "04456A44A956D3C0B5F9B6C754918BF3A8C3D87C858BE7A0C94C9171AB13C58C"
+    pkgs        "make"
+    source_url  "https://mirrors.tuna.tsinghua.edu.cn"
+)
+
 # stdexec
 include("${custom_module}/packages/base/stdexec/stdexec.cmake")
 add_stdexec(name "stdexec-main" version "main" prefix "${third_path}" proxy "${socks5_proxy}")
@@ -71,6 +84,48 @@ add_xz(
     version "5.6.0"
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
+)
+
+# lz4
+include("${custom_module}/packages/compress/lz4/lz4.cmake")
+add_lz4(
+    name    "lz4-1.9.4"
+    version "1.9.4"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+)
+
+# zstd
+include("${custom_module}/packages/compress/zstd/zstd.cmake")
+add_zstd(
+    name    "zstd-1.5.5"
+    version "1.5.5"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+)
+
+# bzip2
+include("${custom_module}/packages/compress/bzip/bzip2.cmake")
+add_bzip2(
+    name    "bzip2-master"
+    version "master"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+    python  "${python3-3.13.0a1-path}"
+    deps    "tool-python3-3.13.0a1"
+)
+
+# libxml2
+include("${custom_module}/packages/serialize/libxml2/libxml2.cmake")
+add_libxml2(
+    name    "libxml2-2.12"
+    version "2.12"
+    prefix  "${third_path}"
+    proxy   "${socks5_proxy}"
+    deps    "pkg-lz4-1.9.4" "pkg-zlib-1.3.1"
+    lzma    "${lz4-1.9.4}-root"
+    "-DZLIB_ROOT=${zlib-1.3.1-root}"
+    "-DLIBXML2_WITH_ICONV=OFF"
 )
 
 # openssl1
@@ -114,17 +169,6 @@ add_boost(
     proxy       "${socks5_proxy}"
 )
 
-# bzip2
-include("${custom_module}/packages/compress/bzip/bzip2.cmake")
-add_bzip2(
-    name    "bzip2-master"
-    version "master"
-    prefix  "${third_path}"
-    proxy   "${socks5_proxy}"
-    python  "${python3-3.13.0a1-path}"
-    deps    "tool-python3-3.13.0a1"
-)
-
 # libarchive
 include("${custom_module}/packages/compress/libarchive/libarchive.cmake")
 add_libarchive(
@@ -133,10 +177,14 @@ add_libarchive(
     prefix  "${third_path}"
     proxy   "${socks5_proxy}"
     deps    "pkg-zlib-1.3.1" "pkg-bzip2-master" "pkg-openssl1-1.1.1w" "pkg-xz-5.6.0"
+            "pkg-lz4-1.9.4" "pkg-zstd-1.5.5" "pkg-libxml2-2.12"
     openssl "${openssl1-1.1.1w-root}"
     zlib    "${zlib-1.3.1-root}"
     bzip2   "${bzip2-master-root}"
     lzma    "${xz-5.6.0-root}"
+    lz4     "${lz4-1.9.4-root}"
+    zstd    "${zstd-1.5.5-root}"
+    libxml2 "${libxml2-2.12-root}"
     "-DENABLE_BZip2=ON" "-DENABLE_ICONV=OFF"
 )
 

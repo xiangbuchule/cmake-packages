@@ -1,37 +1,5 @@
 include(ExternalProject)
 
-# install xz script
-# script:   script file save path
-# source:   source code path
-# zlib:     zlib path dir
-# bzip2:    bzip2 path dir
-function(xz_patch_script)
-    # params
-    cmake_parse_arguments(xz "" "script;source" "" ${ARGN})
-    # set params
-    set(script_content "\
-# set info
-set(source  \"${xz_source}\")
-set(zlib    \"${xz_zlib}\")
-set(bzip2   \"${xz_bzip2}\")
-")
-    string(APPEND script_content [[
-# write CMakeLists.txt content
-set(regex_string "include(CheckFunctionExists)")
-string(APPEND replace_content "${regex_string}\n")
-file(READ "${source}/CMakeLists.txt" old_content)
-if(NOT ("" STREQUAL "${zlib}"))
-    string(APPEND replace_content "set(ZLIB_ROOT \"${zlib}\")\n")
-endif()
-if(NOT ("" STREQUAL "${bzip2}"))
-    string(APPEND replace_content "set(ENV{PATH} \"${bzip2};\$ENV{PATH}\")\n")
-endif()
-string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
-file(WRITE "${source}/CMakeLists.txt" "${new_content}")
-]])
-    file(WRITE "${xz_script}" "${script_content}")
-endfunction()
-
 # check and get cmake args params
 # parameter:    check cmake parameter
 # default:      default value
@@ -217,7 +185,6 @@ function(add_xz)
     set(xz_install   "${xz_prefix}/cache/install/${xz_name}/${xz_build_type}")
     set(xz_build     "${CMAKE_CURRENT_BINARY_DIR}/${pkg_name}-prefix/src/${pkg_name}-build")
     set(xz_source    "${xz_prefix}/${xz_name}")
-    set(xz_patch     "${xz_prefix}/cache/patch/${xz_name}")
     if(MSVC)
         set(xz_binary "${xz_prefix}/cache/bin/${xz_name}")
     else()
@@ -266,14 +233,10 @@ function(add_xz)
         set(xz_url_option   GIT_REPOSITORY "${xz_repository_url}" GIT_TAG "${xz_version}"
                             GIT_SHALLOW ON GIT_PROGRESS OFF UPDATE_DISCONNECTED ON ${git_config})
     endif()
-    # patch
-    set(xz_patch_file "${xz_patch}/patch.cmake")
-    xz_patch_script(script "${xz_patch_file}" source "${xz_source}" zlib "${xz_zlib}" bzip2 "${xz_bzip2}")
-    set(xz_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${xz_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${xz_download}" SOURCE_DIR "${xz_source}"
                                         ${xz_url_option} CMAKE_ARGS ${xz_cmake_options} EXCLUDE_FROM_ALL ON
-                                        ${xz_patch_cmd} ${xz_build_cmd} ${xz_install_cmd} DEPENDS ${xz_deps}
+                                        ${xz_build_cmd} ${xz_install_cmd} DEPENDS ${xz_deps}
                                         USES_TERMINAL_DOWNLOAD  ON USES_TERMINAL_UPDATE ON # USES_TERMINAL_PATCH ON
                                         USES_TERMINAL_CONFIGURE ON USES_TERMINAL_BUILD  ON USES_TERMINAL_INSTALL ON)
     # check is build shared/static

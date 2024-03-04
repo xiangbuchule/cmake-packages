@@ -165,6 +165,7 @@ function(pip_install_pkgs)
         return()
     endif()
     # set build path
+    set(pip_tmp   "${CMAKE_CURRENT_BINARY_DIR}/${target_name}-prefix")
     set(pip_patch "${pip_prefix}/cache/patch/${pip_name}")
     if(NOT EXISTS "${pip_patch}" OR NOT (IS_DIRECTORY "${pip_patch}"))
         file(MAKE_DIRECTORY "${pip_patch}")
@@ -195,9 +196,9 @@ function(pip_install_pkgs)
     endif()
     # add build rule
     add_custom_command(
-        OUTPUT "${python3_patch}/pkgs_installed"
+        OUTPUT "${pip_tmp}/pkgs_installed"
         COMMAND "${python_executable}" -m pip ${pip_option} install ${install_option} ${pkgs_tmp}
-        COMMAND "${CMAKE_COMMAND}" -E touch "${python3_patch}/pkgs_installed"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${pip_tmp}/pkgs_installed"
         ${work_directory_option}
         MAIN_DEPENDENCY "${pkgs_info_file}"
         USES_TERMINAL
@@ -207,7 +208,7 @@ function(pip_install_pkgs)
     add_custom_target(
         "${target_name}"
         ${work_directory_option}
-        DEPENDS "${python3_patch}/pkgs_installed"
+        DEPENDS "${pip_tmp}/pkgs_installed"
         COMMENT "Build '${pip_name}'."
     )
     # add deps

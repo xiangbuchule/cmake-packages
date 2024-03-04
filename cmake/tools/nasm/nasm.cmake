@@ -54,23 +54,18 @@ set(nasm_target \"${nasm_target}\")
     # set script content
     string(APPEND script_content [[
 # extract
-if(NOT EXISTS "${nasm_target}/LICENSE" OR IS_DIRECTORY "${nasm_target}/LICENSE")
-    file(ARCHIVE_EXTRACT INPUT "${nasm_file}" DESTINATION ${nasm_target})
-    file(GLOB_RECURSE files LIST_DIRECTORIES ON "${nasm_target}/**")
-    foreach(item IN LISTS files)
-        string(REGEX REPLACE "${nasm_target}/" "" file_name "${item}")
-        string(REGEX MATCH "/" match_result "${file_name}")
-        if(match_result)
-            get_filename_component(file_name "${file_name}" NAME)
-            file(RENAME "${item}" "${nasm_target}/${file_name}")
-        else()
-            list(APPEND remove_lists "${nasm_target}/${file_name}")
-        endif()
+file(REMOVE_RECURSE "${nasm_target}")
+file(MAKE_DIRECTORY "${nasm_target}")
+file(ARCHIVE_EXTRACT INPUT "${nasm_file}" DESTINATION ${nasm_target})
+file(GLOB files LIST_DIRECTORIES ON "${nasm_target}/**")
+foreach(item IN LISTS files)
+    file(GLOB move_files LIST_DIRECTORIES ON "${item}/**")
+    foreach(k IN LISTS move_files)
+        file(RELATIVE_PATH move_path "${item}" "${k}")
+        file(RENAME "${k}" "${nasm_target}/${move_path}")
     endforeach()
-    foreach(item IN LISTS remove_lists)
-        file(REMOVE_RECURSE "${item}")
-    endforeach()
-endif()
+    file(REMOVE_RECURSE "${item}")
+endforeach()
 ]])
     file(WRITE "${nasm_script}" "${script_content}")
 endfunction()
@@ -134,7 +129,7 @@ function(add_nasm)
         OUTPUT "${nasm_tmp}/touch"
         COMMAND "${CMAKE_COMMAND}" -P "${nasm_patch_extract_script_file}"
         COMMAND "${CMAKE_COMMAND}" -E touch "${nasm_tmp}/touch"
-        WORKING_DIRECTORY "${nasm_source}"
+        WORKING_DIRECTORY "${nasm_source}/.."
         MAIN_DEPENDENCY "${nasm_download}/${nasm_file}"
         USES_TERMINAL
         COMMENT "Extract NASM '${nasm_download}/${nasm_file}' ===> '${nasm_source}' ..."
