@@ -5,27 +5,42 @@ include(ExternalProject)
 # source:   source code path
 function(mysql8_patch_script)
     # params
-    cmake_parse_arguments(mysql8 "" "script;source;proxy" "" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "script;source;proxy;zstd;lz4" "" ${ARGN})
     # set params
     set(script_content "\
 # set info
 set(source  \"${mysql8_source}\")
 set(proxy   \"${mysql8_proxy}\")
+set(zstd    \"${mysql8_zstd}\")
+set(lz4     \"${mysql8_lz4}\")
 ")
     string(APPEND script_content [[
 # write CMakeLists.txt content
+file(READ "${source}/CMakeLists.txt" content)
 set(regex_string "MESSAGE(STATUS \"Running cmake version \${CMAKE_VERSION}\")")
 string(APPEND replace_content "${regex_string}\n")
-string(APPEND replace_content "set(http_proxy \"http://127.0.0.1:10809\")")
-file(READ "${source}/CMakeLists.txt" old_content)
-string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
-file(WRITE "${source}/CMakeLists.txt" "${new_content}")
+if(NOT ("" STREQUAL "${proxy}"))
+    string(APPEND replace_content "set(ENV{http_proxy} \"${proxy}\")\n")
+    string(APPEND replace_content "set(ENV{https_proxy} \"${proxy}\")\n")
+endif()
+if(NOT ("" STREQUAL "${zstd}"))
+    string(APPEND replace_content "set(ENV{PATH} \"${zstd};\$ENV{PATH}\")\n")
+endif()
+if(NOT ("" STREQUAL "${lz4}"))
+    string(APPEND replace_content "set(ENV{PATH} \"${lz4};\$ENV{PATH}\")\n")
+    file(READ "${source}/cmake/lz4.cmake" lz4_content)
+    string(REPLACE "NAMES lz4frame.h)" "NAMES lz4frame.h PATH_SUFFIXES include)" lz4_content "${lz4_content}")
+    string(REPLACE "NAMES lz4)" "NAMES lz4 PATH_SUFFIXES lib)" lz4_content "${lz4_content}")
+    file(WRITE "${source}/cmake/lz4.cmake" "${lz4_content}")
+endif()
+string(REPLACE "${regex_string}" "${replace_content}" content "${content}")
+file(WRITE "${source}/CMakeLists.txt" "${content}")
 
+file(READ "${source}/cmake/install_macros.cmake" content)
 set(regex_string "NOT type MATCHES \"STATIC_LIBRARY\"")
 set(replace_content "${regex_string} AND CMAKE_BUILD_TYPE_UPPER STREQUAL \"DEBUG\"")
-file(READ "${source}/cmake/install_macros.cmake" old_content)
-string(REPLACE "${regex_string}" "${replace_content}" new_content "${old_content}")
-file(WRITE "${source}/cmake/install_macros.cmake" "${new_content}")
+string(REPLACE "${regex_string}" "${replace_content}" new_content "${content}")
+file(WRITE "${source}/cmake/install_macros.cmake" "${content}")
 ]])
     file(WRITE "${mysql8_script}" "${script_content}")
 endfunction()
@@ -180,7 +195,7 @@ endfunction()
 #   ENABLE_LIB_ONLY:    ON
 function(add_mysql8)
     # params
-    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy" "deps" ${ARGN})
+    cmake_parse_arguments(mysql8 "" "name;prefix;version;proxy;zstd;lz4" "deps" ${ARGN})
     # if target exist, return
     if(TARGET "${mysql8_name}" OR (DEFINED "${mysql8_name}-includes"))
         return()
@@ -263,7 +278,8 @@ function(add_mysql8)
     endif()
     # patch
     set(mysql8_patch_file "${mysql8_patch}/patch.cmake")
-    mysql8_patch_script(script "${mysql8_patch_file}" source "${mysql8_source}" proxy "${mysql8_proxy}")
+    mysql8_patch_script(script "${mysql8_patch_file}" source "${mysql8_source}" proxy "${mysql8_proxy}" zstd "${mysql8_zstd}"
+                        lz4 "${mysql8_lz4}")
     set(mysql8_patch_cmd PATCH_COMMAND COMMAND "${CMAKE_COMMAND}" -P "${mysql8_patch_file}")
     # start build
     ExternalProject_Add("${pkg_name}"   DOWNLOAD_DIR "${mysql8_download}" SOURCE_DIR "${mysql8_source}"

@@ -140,9 +140,10 @@ function(add_zlib)
     get_cmake_args(arg "CMAKE_BUILD_TYPE" default "${CMAKE_BUILD_TYPE}" result "zlib_build_type" args_list_name "zlib_UNPARSED_ARGUMENTS")
     # address
     set(zlib_repository_url         "https://github.com/madler/zlib")
-    list(APPEND zlib_version_list   "1.3.1" "1.3")
+    list(APPEND zlib_version_list   "1.3.1" "1.3" "1.2.13")
     list(APPEND zlib_hash_list      "50B24B47BF19E1F35D2A21FF36D2A366638CDF958219A66F30CE0861201760E6"
-                                    "E6EE0C09DCCF864EC23F2DF075401CC7C68A67A8A633FF182E7ABCB7C673356E")
+                                    "E6EE0C09DCCF864EC23F2DF075401CC7C68A67A8A633FF182E7ABCB7C673356E"
+                                    "c2856951bbf30e30861ace3765595d86ba13f2cf01279d901f6c62258c57f4ff")
     # input version is in version list
     string(STRIP "${zlib_version}" zlib_version)
     if("${zlib_version}" STREQUAL "")
