@@ -2,7 +2,8 @@
 #define __MYSQL_POOL__
 
 #include <condition_variable>
-#include <deque>
+#include <functional>
+#include <list>
 #include <memory>
 #include <mutex>
 
@@ -17,46 +18,28 @@
 #include "mysqlx/xdevapi.h"
 
 class MySQLPool {
-    enum DriverState {
-        FREE,
-        BUSY
-    };
-    struct Driver {
-        std::shared_ptr<sql::mysql::MySQL_Driver> driver;
-        std::shared_ptr<sql::Connection>          connection;
-        DriverState                               state;
-    };
-
   private:
-    std::mutex                          _mutex;
-    std::condition_variable             _cond;
-    size_t                              max;
-    size_t                              min;
-    std::deque<std::shared_ptr<Driver>> driver;
-
-    void resize();
+    std::unique_ptr<sql::mysql::MySQL_Driver, std::function<void(sql::mysql::MySQL_Driver *)>> _driver;
+    std::shared_ptr<sql::ConnectOptionsMap>                                                    _config;
+    std::mutex                                                                                 _mutex;
+    std::condition_variable                                                                    _cond;
+    size_t                                                                                     _max;
+    size_t                                                                                     _min;
+    // 忙碌
+    std::list<std::shared_ptr<sql::Connection>> _busy_conns;
+    // 空闲
+    std::list<std::shared_ptr<sql::Connection>> _free_conns;
 
   public:
-    MySQLPool();
-    std::shared_ptr<Driver> get_driver() {
-        std::unique_lock<std::mutex> lock(this->_mutex);
-        auto data = this->driver.emplace_front();
-        if (data->state == DriverState::BUSY) {
-            if (this->driver.size() < this->max) {
-                auto new_data   = std::make_shared<Driver>();
-                new_data->state = DriverState::BUSY;
-                this->driver.push_back(new_data);
-                return new_data;
-            } else {
-                this->_cond.wait(lock);
-            }
-        }
-        data->state = DriverState::BUSY;
-        this->driver.push_back(data);
-        return data;
-    }
+    MySQLPool(std::shared_ptr<sql::ConnectOptionsMap> &&config, size_t min, size_t max);
     std::shared_ptr<sql::Connection> get_connection();
     ~MySQLPool();
+
+    size_t get_size();
+    size_t get_free_size();
+    size_t get_busy_size();
+    size_t get_min();
+    size_t get_max();
 };
 
 #endif

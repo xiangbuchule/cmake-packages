@@ -31,6 +31,7 @@ extern "C" {
 
 #include "global.h"
 #include "init.hpp"
+#include "mysql_pool.h"
 #include "ui/layer.h"
 #include "ui/ui.h"
 
@@ -38,24 +39,35 @@ void input_key_callback(GLFWwindow *window, GLint key, GLint scancode, GLint act
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void window_size_callback(GLFWwindow *window, int width, int height);
 int  main() {
-    // 创建 MySQL 连接
-    sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
-    sql::Connection          *con    = driver->connect("tcp://192.168.2.197:9401", "root", "cctv");
-    // 选择数据库
-    con->setSchema("mysql");
-    // 执行查询
-    sql::Statement *stmt;
-    sql::ResultSet *res;
-    stmt = con->createStatement();
-    res  = stmt->executeQuery("SELECT 1234/2345");
-    // 处理结果
-    while (res->next()) {
-        auto ss = res->getDouble(1);
-        int  s  = 10;
-    }
+    auto config = std::make_shared<sql::ConnectOptionsMap>();
+    config->insert(std::make_pair("hostname", "tcp://192.168.2.197:9401"));
+    config->insert(std::make_pair("userName", "root"));
+    config->insert(std::make_pair("password", "cctv"));
+    auto pool = std::make_shared<MySQLPool>(std::move(std::move(config)), 4, 20);
+    auto conn = pool->get_connection();
+    conn->setSchema("mysql");
+    auto stmt = conn->createStatement();
+    auto res  = stmt->executeQuery("SELECT 1234/2345");
     delete res;
     delete stmt;
-    delete con;
+    // // 创建 MySQL 连接
+    // sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
+    // sql::Connection          *con    = driver->connect("tcp://192.168.2.197:9401", "root", "cctv");
+    // // 选择数据库
+    // con->setSchema("mysql");
+    // // 执行查询
+    // sql::Statement *stmt;
+    // sql::ResultSet *res;
+    // stmt = con->createStatement();
+    // res  = stmt->executeQuery("SELECT 1234/2345");
+    // // 处理结果
+    // while (res->next()) {
+    //     auto ss = res->getDouble(1);
+    //     int  s  = 10;
+    // }
+    // delete res;
+    // delete stmt;
+    // delete con;
     // 初始化
     init();
     // shader
